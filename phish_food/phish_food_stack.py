@@ -14,7 +14,7 @@ from aws_cdk import (
 )
 
 
-def S3_TRADEABLES(stack) -> s3.Bucket:
+def S3_TRADEABLES(stack: core.Construct) -> s3.Bucket:
     bucket = s3.Bucket(
         stack,
         "TradeableSecurities",
@@ -24,7 +24,7 @@ def S3_TRADEABLES(stack) -> s3.Bucket:
     return bucket
 
 
-def DYNAMO_SCRAPERESULTS(stack) -> dynamodb.Table:
+def DYNAMO_SCRAPERESULTS(stack: core.Construct) -> dynamodb.Table:
     # parition is sub+YYYY+MM+DD
     table = dynamodb.Table(
         stack,
@@ -40,7 +40,7 @@ def DYNAMO_SCRAPERESULTS(stack) -> dynamodb.Table:
     return table
 
 
-def DYNAMO_REDDITARCHIVE(stack) -> dynamodb.Table:
+def DYNAMO_REDDITARCHIVE(stack: core.Construct) -> dynamodb.Table:
     # parition is sub+YYYY+MM+DD
     table = dynamodb.Table(
         stack,
@@ -57,13 +57,13 @@ def DYNAMO_REDDITARCHIVE(stack) -> dynamodb.Table:
 
 
 def FARGATE_ETL(
-    stack,
-    cluster,
-    vpc,
-    bucket,
+    stack: core.Construct,
+    cluster: ecs.Cluster,
+    vpc: ec2.Vpc,
+    bucket: s3.Bucket,
     results_table: dynamodb.Table,
     archive_table: dynamodb.Table,
-):
+) -> ecs_patterns.ScheduledFargateTask:
 
     app_secret = os.environ["APP_SECRET"]
     app_id = os.environ["APP_ID"]
@@ -95,16 +95,22 @@ def FARGATE_ETL(
             "cron(0 * * * ? *)",  # Run at beginning of every hour
         ),
         rule_name="RunETLTask",
+        subnet_selection=ec2.SubnetSelection(
+            subnet_type=ec2.SubnetType.PUBLIC
+        ),
     )
 
     bucket.grant_read(task.task_definition.task_role)
+
     results_table.grant_read_write_data(task.task_definition.task_role)
     archive_table.grant_read_write_data(task.task_definition.task_role)
 
-    return
+    return task
 
 
-def LAMBDA_REFRESH_TRADEABLES(stack, bucket):
+def LAMBDA_REFRESH_TRADEABLES(
+    stack: core.Construct, bucket: s3.Bucket
+) -> lambda_.Function:
 
     handler = lambda_.Function(
         stack,
@@ -131,7 +137,9 @@ def LAMBDA_REFRESH_TRADEABLES(stack, bucket):
     rule = aws_events.Rule(
         stack,
         "RefreshTrabeablesSchedule",
-        schedule=aws_events.Schedule.cron(minute="0", hour="0", day="*", month="*", year="*"),
+        schedule=aws_events.Schedule.cron(
+            minute="0", hour="0", day="*", month="*", year="*"
+        ),
     )
 
     rule.add_target(targets.LambdaFunction(handler))
@@ -146,18 +154,21 @@ class PhishFoodStack(core.Stack):
 
         super().__init__(scope, construct_id, stack_name="PhishFood", **kwargs)
 
-        # The code that defines your stack goes here
         vpc = ec2.Vpc(
-            self, "PhishFood-VPC", max_azs=1
-        )  # default is all AZs in region
+            self,
+            "PhishFood-VPC",
+            nat_gateways=0, # $1/day is too damn high
+        )
+        cluster = ecs.Cluster(self, "PhishFood-EcsCluster", vpc=vpc)
 
         tradeables_bucket = S3_TRADEABLES(self)
-        LAMBDA_REFRESH_TRADEABLES(self, tradeables_bucket)
+        refresh_tradeables_func = LAMBDA_REFRESH_TRADEABLES(
+            self, tradeables_bucket
+        )
 
         main_table = DYNAMO_SCRAPERESULTS(self)
         rarchive_table = DYNAMO_REDDITARCHIVE(self)
 
-        cluster = ecs.Cluster(self, "PhishFood-EcsCluster", vpc=vpc)
-        FARGATE_ETL(
+        elt_task = FARGATE_ETL(
             self, cluster, vpc, tradeables_bucket, main_table, rarchive_table
         )
