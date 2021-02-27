@@ -1,0 +1,19 @@
+FROM golang:1.15 AS builder
+
+WORKDIR /go/src/github.com/fischersean/phish-food
+
+#COPY ./pkg ./pkg
+COPY ./cmd/ecs/etl ./cmd
+COPY ./internal ./internal
+
+RUN go get -d -v ./...
+RUN CGO_ENABLED=0 go install -v ./...
+
+# Second, run stage
+FROM alpine:3.12
+
+WORKDIR /app
+#COPY --from=builder /go/src/github.com/fischersean/wsb-digest /app
+COPY --from=builder /go/bin /usr/bin
+
+CMD ["cmd"]

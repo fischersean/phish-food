@@ -1,7 +1,12 @@
+template.yaml
+cp.out
+.DS_Store
+resources/
 *.swp
 package-lock.json
 __pycache__
 .pytest_cache
+.envrc
 .env
 .venv
 *.egg-info
