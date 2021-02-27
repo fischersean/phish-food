@@ -38,6 +38,7 @@ var (
 		"ATL",
 		"FOR",
 		"GDP",
+		"EDIT",
 	}
 	TickerRestrictedList = map[string]string{
 		"A": "",

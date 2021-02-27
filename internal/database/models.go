@@ -5,6 +5,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 
 	"github.com/fischersean/phish-food/internal/report"
+
+	"time"
 )
 
 type Connection struct {
@@ -23,6 +25,12 @@ type EtlResultsRecord struct {
 	Id   string               `json:"id"`
 	Hour int                  `json:"hour"`
 	Data []report.StockReport `json:"data"`
+}
+
+type EtlResultsQueryInput struct {
+	Subreddit string
+	Date      time.Time
+	Limit     int
 }
 
 type RedditResposeArchiveRecord struct {

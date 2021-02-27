@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	dateFormat string = "20060102"
+	DateFormat string = "20060102"
 )
 
 func Connect(input ConnectionInput) (conn Connection, err error) {
@@ -33,7 +33,7 @@ func NewRedditResponseArchiveTable(p []reddit.Post, sub string, t time.Time) (r 
 	for _, v := range p {
 		r.Posts = append(r.Posts, v.Permalink)
 	}
-	r.Id = fmt.Sprintf("%s_%s", sub, t.Format(dateFormat))
+	r.Id = fmt.Sprintf("%s_%s", sub, t.Format(DateFormat))
 	r.Hour = t.Hour()
 
 	return r
@@ -63,7 +63,7 @@ func (c *Connection) PutRedditResonseArchiveRecord(record RedditResposeArchiveRe
 func NewEtlResultsRecord(sr []report.StockReport, sub string, t time.Time) (e EtlResultsRecord) {
 
 	e.Data = sr
-	e.Id = fmt.Sprintf("%s_%s", sub, t.Format(dateFormat))
+	e.Id = fmt.Sprintf("%s_%s", sub, t.Format(DateFormat))
 	e.Hour = t.Hour()
 
 	return e
@@ -88,4 +88,31 @@ func (c *Connection) PutEtlResultsRecord(record EtlResultsRecord) (err error) {
 	_, err = c.Service.PutItem(input)
 
 	return err
+}
+
+func (c *Connection) GetEtlResultsRecord(input EtlResultsQueryInput) (record []EtlResultsRecord, err error) {
+
+	if c.EtlResultsTable == "" {
+		return record, fmt.Errorf("EtlResultsTable name is undefined")
+	}
+
+	qInput := &dynamodb.QueryInput{
+		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
+			":v1": {
+				S: aws.String(fmt.Sprintf("%s_%s", input.Subreddit, input.Date.Format(DateFormat))),
+			},
+		},
+		KeyConditionExpression: aws.String("id = :v1"),
+		TableName:              aws.String(c.EtlResultsTable),
+	}
+
+	result, err := c.Service.Query(qInput)
+
+	if err != nil {
+		return record, err
+	}
+
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &record)
+
+	return record, err
 }

@@ -11,6 +11,7 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_events as aws_events,
     aws_events_targets as targets,
+    aws_apigateway as apigateway,
 )
 
 
@@ -94,7 +95,6 @@ def FARGATE_ETL(
         schedule=events.Schedule.expression(
             "cron(0 * * * ? *)",  # Run at beginning of every hour
         ),
-        rule_name="RunETLTask",
         subnet_selection=ec2.SubnetSelection(
             subnet_type=ec2.SubnetType.PUBLIC
         ),
@@ -108,7 +108,62 @@ def FARGATE_ETL(
     return task
 
 
-def LAMBDA_REFRESH_TRADEABLES(
+def API_MAIN(
+    stack: core.Construct, get_countresults_func: lambda_.Function
+) -> apigateway.RestApi:
+
+    api = apigateway.RestApi(stack, "RedditTrendsAPI")
+    api.root.add_method("ANY")
+    reddit = api.root.add_resource("reddit")
+
+    get_cr_integration = apigateway.LambdaIntegration(get_countresults_func)
+    reddit.add_method(
+        "GET",
+        get_cr_integration,
+        request_validator_options={
+            "validate_request_parameters": True,
+        },
+        request_parameters={
+            "method.request.querystring.subreddit": True,
+            "method.request.querystring.date": True,
+        },
+    )
+
+    return api
+
+
+def LAMBDA_GET_COUNTRESULTS(
+    stack: core.Construct, table: dynamodb.Table
+) -> lambda_.Function:
+
+    handler = lambda_.Function(
+        stack,
+        "GetCountResultsFunction",
+        runtime=lambda_.Runtime.GO_1_X,
+        code=lambda_.Code.from_asset(
+            ".",
+            bundling=core.BundlingOptions(
+                user="root",
+                image=lambda_.Runtime.GO_1_X.bundling_docker_image,
+                command=[
+                    "bash",
+                    "-c",
+                    "GOOS=linux go build -o /asset-output/main cmd/lambda/get-count-results/main.go",
+                ],
+            ),
+        ),
+        handler="main",
+        environment={
+            "TABLE": table.table_name,
+        },
+    )
+
+    table.grant_read_data(handler)
+
+    return handler
+
+
+def LAMBDA_REFRESHTRADEABLES(
     stack: core.Construct, bucket: s3.Bucket
 ) -> lambda_.Function:
 
@@ -157,18 +212,22 @@ class PhishFoodStack(core.Stack):
         vpc = ec2.Vpc(
             self,
             "PhishFood-VPC",
-            nat_gateways=0, # $1/day is too damn high
+            nat_gateways=0,  # $1/day is too damn high
         )
         cluster = ecs.Cluster(self, "PhishFood-EcsCluster", vpc=vpc)
 
         tradeables_bucket = S3_TRADEABLES(self)
-        refresh_tradeables_func = LAMBDA_REFRESH_TRADEABLES(
+        refresh_tradeables_func = LAMBDA_REFRESHTRADEABLES(
             self, tradeables_bucket
         )
 
         main_table = DYNAMO_SCRAPERESULTS(self)
         rarchive_table = DYNAMO_REDDITARCHIVE(self)
 
-        elt_task = FARGATE_ETL(
+        etl_task = FARGATE_ETL(
             self, cluster, vpc, tradeables_bucket, main_table, rarchive_table
         )
+
+        # API
+        get_count_results_func = LAMBDA_GET_COUNTRESULTS(self, main_table)
+        api = API_MAIN(self, get_count_results_func)
