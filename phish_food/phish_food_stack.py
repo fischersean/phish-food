@@ -12,6 +12,7 @@ from aws_cdk import (
     aws_events as aws_events,
     aws_events_targets as targets,
     aws_apigateway as apigateway,
+    aws_certificatemanager as certificates,
 )
 
 
@@ -112,7 +113,24 @@ def API_MAIN(
     stack: core.Construct, get_countresults_func: lambda_.Function
 ) -> apigateway.RestApi:
 
-    api = apigateway.RestApi(stack, "RedditTrendsAPI")
+    # TODO: This needs to be changed to a dynamic cert request
+    # instead of relying on a cert already existing
+    api = apigateway.RestApi(
+        stack,
+        "RedditTrendsAPI",
+        domain_name=apigateway.DomainNameOptions(
+            domain_name="api.thekettle.org",
+            certificate=certificates.Certificate.from_certificate_arn(
+                stack,
+                "DomainCertificate",
+                "arn:aws:acm:us-east-2:261392311630:certificate/8509c657-9ad9-4c9a-80e2-f11d9535b13d",
+            ),
+        ),
+        deploy_options=apigateway.StageOptions(
+            stage_name="v0",
+        ),
+    )
+
     api.root.add_method("ANY")
     reddit = api.root.add_resource("reddit")
 
