@@ -13,7 +13,51 @@ from aws_cdk import (
     aws_events_targets as targets,
     aws_apigateway as apigateway,
     aws_certificatemanager as certificates,
+    aws_s3_deployment as s3deploy,
+    aws_cloudfront as cloudfront,
+    aws_cloudfront_origins as origins,
 )
+
+
+def S3_FRONTENDDEPLOY(stack: core.Construct) -> s3.Bucket:
+    bucket = s3.Bucket(
+        stack,
+        "FrontendBucket",
+        website_index_document="index.html",
+        # public_read_access=True,
+    )
+
+    distribution = cloudfront.Distribution(
+        stack,
+        "FrontendDistribution",
+        # TODO: The domain and cert info should be env vars
+        domain_names=["www.thekettle.org"],
+        certificate=certificates.Certificate.from_certificate_arn(
+            stack,
+            "DomainCertificateEast1",
+            "arn:aws:acm:us-east-1:261392311630:certificate/02a75969-25ce-47d3-acf6-d93408b2eed1",
+        ),
+        default_behavior=cloudfront.BehaviorOptions(
+            origin=origins.S3Origin(
+                bucket,
+                origin_access_identity=cloudfront.OriginAccessIdentity(
+                    stack,
+                    "FrontendDeplotmentIdentity",
+                ),
+            ),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        ),
+    )
+
+    s3deploy.BucketDeployment(
+        stack,
+        "FrontendS3Deployment",
+        sources=[s3deploy.Source.asset("./web/dist")],
+        destination_bucket=bucket,
+        distribution=distribution,
+    )
+
+    return bucket
 
 
 def S3_TRADEABLES(stack: core.Construct) -> s3.Bucket:
@@ -122,9 +166,10 @@ def API_MAIN(
             domain_name="api.thekettle.org",
             certificate=certificates.Certificate.from_certificate_arn(
                 stack,
-                "DomainCertificate",
+                "DomainCertificateEast2",
                 "arn:aws:acm:us-east-2:261392311630:certificate/8509c657-9ad9-4c9a-80e2-f11d9535b13d",
             ),
+            security_policy=apigateway.SecurityPolicy.TLS_1_2,
         ),
         deploy_options=apigateway.StageOptions(
             stage_name="v0",
@@ -249,3 +294,6 @@ class PhishFoodStack(core.Stack):
         # API
         get_count_results_func = LAMBDA_GET_COUNTRESULTS(self, main_table)
         api = API_MAIN(self, get_count_results_func)
+
+        # Front end deployment
+        S3_FRONTENDDEPLOY(self)
