@@ -19,6 +19,7 @@ type Connection struct {
 	EtlResultsTable            string
 	YahooTrendingTable         string
 	RedditResponseArchiveTable string
+	UserTable                  string
 }
 
 type EtlResultsRecord struct {
@@ -44,4 +45,20 @@ type ConnectionInput struct {
 	EtlResultsTable            string
 	YahooTrendingTable         string
 	RedditResponseArchiveTable string
+	UserTable                  string
+}
+
+type UserRecord struct {
+	Username      string `json:"id"`
+	ApiKey        string `json:"Key"`
+	ApiKeyEnabled bool   `json:"KeyEnabled"`
+}
+
+type UserQueryInput struct {
+	Username string
+}
+
+type UserUpdateInput struct {
+	Username      string
+	NewUserRecord UserRecord
 }

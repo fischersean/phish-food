@@ -1,0 +1,34 @@
+[
+  {
+    "id": "prod_J7diq1CnOla4mO",
+    "object": "product",
+    "active": true,
+    "attributes": [],
+    "created": 1615845555,
+    "description": "Premium service with extra features",
+    "images": [],
+    "livemode": false,
+    "metadata": {},
+    "name": "Billing Guide: Premium Service",
+    "statement_descriptor": null,
+    "type": "service",
+    "unit_label": null,
+    "updated": 1615845555
+  },
+  {
+    "id": "prod_J7dipDsHI2bTSt",
+    "object": "product",
+    "active": true,
+    "attributes": [],
+    "created": 1615845555,
+    "description": "Basic service with minimum features",
+    "images": [],
+    "livemode": false,
+    "metadata": {},
+    "name": "Billing Guide: Basic Service",
+    "statement_descriptor": null,
+    "type": "service",
+    "unit_label": null,
+    "updated": 161545555
+  }
+]
