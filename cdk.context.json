@@ -1,0 +1,11 @@
+{
+  "availability-zones:account=261392311630:region=us-east-2": [
+    "us-east-2a",
+    "us-east-2b",
+    "us-east-2c"
+  ],
+  "hosted-zone:account=261392311630:domainName=thekettle.org:region=us-east-2": {
+    "Id": "/hostedzone/Z0864562JJDZ4PZXPZGZ",
+    "Name": "thekettle.org."
+  }
+}

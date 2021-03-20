@@ -13,7 +13,11 @@ from aws_cdk import (
 
 class FrontendStack(core.NestedStack):
     def __init__(
-        self, scope: core.Construct, construct_id: str, **kwargs
+        self,
+        scope: core.Construct,
+        construct_id: str,
+        hosted_zone: route53.HostedZone,
+        **kwargs
     ) -> None:
 
         super().__init__(scope, construct_id, **kwargs)
@@ -54,15 +58,11 @@ class FrontendStack(core.NestedStack):
 
         # Below is currently broken
         # Domain name setup
-        # cname_record = route53.CnameRecord(
-            # self,
-            # "CloudFrontFrontendCnameRecord",
-            # # TODO: This needs to be an env variable
-            # zone=route53.HostedZone.from_hosted_zone_attributes(
-                # self,
-                # "DomainHostedZoneId",
-                # hosted_zone_id="Z0864562JJDZ4PZXPZGZ",
-                # zone_name="thekettle.org",
-            # ),
-            # domain_name=distribution.domain_name,
-        # )
+        cname_record = route53.CnameRecord(
+            self,
+            "CloudFrontFrontendCnameRecord",
+            # TODO: This needs to be an env variable
+            zone=hosted_zone,
+            domain_name=distribution.domain_name,
+            record_name="www",
+        )

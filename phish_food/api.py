@@ -7,6 +7,8 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_apigateway as apigateway,
     aws_certificatemanager as certificates,
+    aws_route53 as route53,
+    aws_route53_targets as alias,
 )
 
 
@@ -16,6 +18,7 @@ class ApiStack(core.NestedStack):
         scope: core.Construct,
         construct_id: str,
         count_results_table: str,
+        hosted_zone: route53.HostedZone,
         **kwargs
     ) -> None:
 
@@ -63,6 +66,17 @@ class ApiStack(core.NestedStack):
                 "method.request.querystring.date": True,
             },
         )
+
+        # Route53 alias record
+        a_record = route53.ARecord(
+            self,
+            "ApiARecord",
+            zone=hosted_zone,
+            target=route53.RecordTarget.from_alias(alias.ApiGateway(self.api)),
+            record_name="api",
+        )
+
+        return
 
     def lambda_get_countresults(self, count_results_table) -> lambda_.Function:
         handler = lambda_.Function(

@@ -1,5 +1,7 @@
 from aws_cdk import (
     core,
+    aws_route53 as route53,
+    aws_ec2 as ec2,
 )
 
 from phish_food.backend import BackendStack
@@ -13,5 +15,18 @@ class PhishFood(core.Stack):
 
         super().__init__(scope, construct_id, **kwargs)
 
-        frontend = FrontendStack(self, "Frontend")
-        backend = BackendStack(self, "Backend")
+        vpc = ec2.Vpc(
+            self,
+            "PhishFood-VPC",
+            nat_gateways=0,  # $1/day is too damn high
+        )
+
+        # Route53 hosted zone
+        zone = route53.HostedZone.from_lookup(
+            self,
+            "DomainHostedZone",
+            domain_name="thekettle.org",
+        )
+
+        frontend = FrontendStack(self, "Frontend", hosted_zone=zone)
+        backend = BackendStack(self, "Backend", vpc=vpc, hosted_zone=zone)
