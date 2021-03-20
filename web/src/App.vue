@@ -1,14 +1,27 @@
 <template>
   <div id="app" class="font-mono flex flex-col">
-    <div class="self-center items-center">
-      <div class="mt-10 mb-10 text-xl" id="nav">
-        <router-link to="/">Home</router-link> |
-        <router-link to="/about">About</router-link> |
-        <router-link to="/docs">Documentation</router-link>
-      </div>
-    </div>
+    <!--<Nav>-->
+    <!--<NavItem :href="{ to: '/docs', label: 'Docs' }"> </NavItem>-->
+    <!--<NavItem :href="{ to: '/buy', label: 'Buy' }"> </NavItem>-->
+    <!--</Nav>-->
     <router-view class="self-center" />
   </div>
 </template>
+
+<script>
+//import Nav from "./components/Nav.vue";
+//import NavItem from "./components/Navitem.vue";
+
+export default {
+  name: "App",
+  components: {
+    //Nav,
+    //NavItem,
+  },
+  data: function () {
+    return {};
+  },
+};
+</script>
 
 <style></style>

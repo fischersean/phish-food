@@ -11,139 +11,131 @@ from aws_cdk import (
     aws_ecs_patterns as ecs_patterns,
     aws_events as aws_events,
     aws_events_targets as targets,
-    aws_certificatemanager as certificates,
 )
 
 
-def S3_TRADEABLES(stack: core.Construct) -> s3.Bucket:
-    bucket = s3.Bucket(
-        stack,
-        "TradeableSecurities",
-        removal_policy=core.RemovalPolicy.DESTROY,
-    )
+class EtlStack(core.NestedStack):
+    def __init__(
+        self,
+        scope: core.Construct,
+        construct_id: str,
+        vpc: ec2.Vpc,
+        cluster: ecs.Cluster,
+        count_results_table: dynamodb.Table,
+        reddit_archive_table: dynamodb.Table,
+        **kwargs
+    ) -> None:
 
-    return bucket
+        super().__init__(scope, construct_id, **kwargs)
+        """
+        Should alread have all tables created
 
+        Create tradeables bucket, function
+        Create Fargate task
+        """
+        tradeables_bucket, tradeables_update_func = self.tradeables()
+        etl_task = self.fargate_etl(
+            vpc,
+            cluster,
+            tradeables_bucket,
+            count_results_table,
+            reddit_archive_table,
+        )
 
-def DYNAMO_SCRAPERESULTS(stack: core.Construct) -> dynamodb.Table:
-    # parition is sub+YYYY+MM+DD
-    table = dynamodb.Table(
-        stack,
-        "RedditTrendingStocks",
-        partition_key=dynamodb.Attribute(
-            name="id", type=dynamodb.AttributeType.STRING
-        ),
-        sort_key=dynamodb.Attribute(
-            name="hour", type=dynamodb.AttributeType.NUMBER
-        ),
-    )
+    def tradeables(self) -> (s3.Bucket, lambda_.Function):
 
-    return table
+        bucket = s3.Bucket(
+            self,
+            "TradeableSecurities",
+            removal_policy=core.RemovalPolicy.DESTROY,
+        )
 
-
-def DYNAMO_REDDITARCHIVE(stack: core.Construct) -> dynamodb.Table:
-    # parition is sub+YYYY+MM+DD
-    table = dynamodb.Table(
-        stack,
-        "RedditPermalinkArchive",
-        partition_key=dynamodb.Attribute(
-            name="id", type=dynamodb.AttributeType.STRING
-        ),
-        sort_key=dynamodb.Attribute(
-            name="hour", type=dynamodb.AttributeType.NUMBER
-        ),
-    )
-
-    return table
-
-
-def FARGATE_ETL(
-    stack: core.Construct,
-    cluster: ecs.Cluster,
-    vpc: ec2.Vpc,
-    bucket: s3.Bucket,
-    results_table: dynamodb.Table,
-    archive_table: dynamodb.Table,
-) -> ecs_patterns.ScheduledFargateTask:
-
-    app_secret = os.environ["APP_SECRET"]
-    app_id = os.environ["APP_ID"]
-    if app_secret == "" or app_id == "":
-        raise ValueError("Could not find reddit app secrets")
-
-    task = ecs_patterns.ScheduledFargateTask(
-        stack,
-        "ETLTask",
-        cluster=cluster,
-        vpc=vpc,
-        scheduled_fargate_task_image_options=ecs_patterns.ScheduledFargateTaskImageOptions(
-            image=ecs.ContainerImage.from_asset(
+        handler = lambda_.Function(
+            self,
+            "RefreshTrabeablesFunction",
+            runtime=lambda_.Runtime.GO_1_X,
+            code=lambda_.Code.from_asset(
                 ".",
-                file="Dockerfile.etl",
+                bundling=core.BundlingOptions(
+                    user="root",
+                    image=lambda_.Runtime.GO_1_X.bundling_docker_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "GOOS=linux go build -o /asset-output/main cmd/lambda/refresh-tradeables/main.go",
+                    ],
+                ),
             ),
-            environment={
-                "name": "TRIGGER",
-                "value": "CloudWatch Events",
-                "BUCKET": bucket.bucket_name,
-                "APP_ID": app_id,
-                "APP_SECRET": app_secret,
-                "TABLE": results_table.table_name,
-                "ARCHIVE_TABLE": archive_table.table_name,
-            },
-            cpu=2048,
-            memory_limit_mib=4096,
-        ),
-        enabled=True,
-        schedule=events.Schedule.expression(
-            "cron(0 * * * ? *)",  # Run at beginning of every hour
-        ),
-        subnet_selection=ec2.SubnetSelection(
-            subnet_type=ec2.SubnetType.PUBLIC
-        ),
-    )
+            handler="main",
+            environment=dict(BUCKET=bucket.bucket_name),
+        )
 
-    bucket.grant_read(task.task_definition.task_role)
+        bucket.grant_read_write(handler)
 
-    results_table.grant_read_write_data(task.task_definition.task_role)
-    archive_table.grant_read_write_data(task.task_definition.task_role)
-
-    return task
-
-
-def LAMBDA_REFRESHTRADEABLES(
-    stack: core.Construct, bucket: s3.Bucket
-) -> lambda_.Function:
-
-    handler = lambda_.Function(
-        stack,
-        "RefreshTrabeablesFunction",
-        runtime=lambda_.Runtime.GO_1_X,
-        code=lambda_.Code.from_asset(
-            ".",
-            bundling=core.BundlingOptions(
-                user="root",
-                image=lambda_.Runtime.GO_1_X.bundling_docker_image,
-                command=[
-                    "bash",
-                    "-c",
-                    "GOOS=linux go build -o /asset-output/main cmd/lambda/refresh-tradeables/main.go",
-                ],
+        rule = aws_events.Rule(
+            self,
+            "RefreshTrabeablesSchedule",
+            schedule=aws_events.Schedule.cron(
+                minute="0", hour="0", day="*", month="*", year="*"
             ),
-        ),
-        handler="main",
-        environment=dict(BUCKET=bucket.bucket_name),
-    )
+        )
 
-    bucket.grant_read_write(handler)
+        rule.add_target(targets.LambdaFunction(handler))
 
-    rule = aws_events.Rule(
-        stack,
-        "RefreshTrabeablesSchedule",
-        schedule=aws_events.Schedule.cron(
-            minute="0", hour="0", day="*", month="*", year="*"
-        ),
-    )
+        return bucket, handler
 
-    rule.add_target(targets.LambdaFunction(handler))
+    def fargate_etl(
+        self,
+        vpc: ec2.Vpc,
+        cluster: ecs.Cluster,
+        tradeables_bucket: s3.Bucket,
+        count_results_table: dynamodb.Table,
+        reddit_archive_table: dynamodb.Table,
+    ) -> ecs.TaskDefinition:
 
-    return handler
+        app_secret = os.environ["APP_SECRET"]
+        app_id = os.environ["APP_ID"]
+        if app_secret == "" or app_id == "":
+            raise ValueError("Could not find reddit app secrets")
+
+        task = ecs_patterns.ScheduledFargateTask(
+            self,
+            "ETLTask",
+            cluster=cluster,
+            vpc=vpc,
+            scheduled_fargate_task_image_options=ecs_patterns.ScheduledFargateTaskImageOptions(
+                image=ecs.ContainerImage.from_asset(
+                    ".",
+                    file="Dockerfile.etl",
+                ),
+                environment={
+                    "name": "TRIGGER",
+                    "value": "CloudWatch Events",
+                    "BUCKET": tradeables_bucket.bucket_name,
+                    "APP_ID": app_id,
+                    "APP_SECRET": app_secret,
+                    "TABLE": count_results_table.table_name,
+                    "ARCHIVE_TABLE": reddit_archive_table.table_name,
+                },
+                cpu=2048,
+                memory_limit_mib=4096,
+            ),
+            enabled=True,
+            schedule=events.Schedule.expression(
+                "cron(0 * * * ? *)",  # Run at beginning of every hour
+            ),
+            subnet_selection=ec2.SubnetSelection(
+                subnet_type=ec2.SubnetType.PUBLIC
+            ),
+        )
+
+        tradeables_bucket.grant_read(task.task_definition.task_role)
+
+        count_results_table.grant_read_write_data(
+            task.task_definition.task_role
+        )
+        reddit_archive_table.grant_read_write_data(
+            task.task_definition.task_role
+        )
+
+        return task
