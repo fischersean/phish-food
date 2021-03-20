@@ -2,4 +2,4 @@
 
 *Like the Ben & Jerry's Ice Cream*
 
-`cdk deploy PhishFood PhishFoodFrontent`
+`cdk deploy`
