@@ -64,7 +64,7 @@ func Handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		return apiError(500, fmt.Errorf(""))
 	}
 
-	etlRecord, err := conn.GetEtlResultsRecord(database.EtlResultsQueryInput{
+	etlRecord, err := conn.GetEtlResultsRecordLatest(datEtlResultsLatestQueryInputyInput{
 		Subreddit: subreddit,
 		Date:      dateTime,
 	})

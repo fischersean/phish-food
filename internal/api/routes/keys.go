@@ -36,7 +36,7 @@ func CreateApiKeyAndAddToPlan(conn db.Connection, plan string, name string) (key
 	return key, err
 }
 
-func HandleGetKey(w http.ResponseWriter, r *http.Request) {
+func handleGetKey(w http.ResponseWriter, r *http.Request) {
 
 	tokenHeader := r.Header["Authorization"]
 	token, err := api.ParseAndValidateJWT(tokenHeader[0])

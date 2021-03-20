@@ -12,7 +12,7 @@ func setHeaders(w http.ResponseWriter) {
 }
 
 // HttpServeJSON sets common headers for serving JSON data
-func HttpServeJSON(w http.ResponseWriter, r *http.Request, b []byte) (int, error) {
+func HttpServeJSON(w http.ResponseWriter, b []byte) (int, error) {
 
 	setHeaders(w)
 	w.Header().Set("Content-Type", "application/json")
@@ -28,7 +28,7 @@ func HttpServeJSON(w http.ResponseWriter, r *http.Request, b []byte) (int, error
 }
 
 // ServeMarshallableData serves to w the interface. Will throw an error if data cannot be marhalled
-func HttpServeMarahallableData(w http.ResponseWriter, r *http.Request, v interface{}) {
+func HttpServeMarahallableData(w http.ResponseWriter, v interface{}) {
 	b, err := json.Marshal(v)
 
 	if err != nil {
@@ -36,5 +36,5 @@ func HttpServeMarahallableData(w http.ResponseWriter, r *http.Request, v interfa
 		return
 	}
 
-	HttpServeJSON(w, r, b)
+	HttpServeJSON(w, b)
 }

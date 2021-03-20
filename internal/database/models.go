@@ -17,9 +17,13 @@ type Connection struct {
 	Service *dynamodb.DynamoDB
 
 	EtlResultsTable            string
-	YahooTrendingTable         string
 	RedditResponseArchiveTable string
-	UserTable                  string
+
+	// YahooTrendingTable is deprecated
+	YahooTrendingTable string
+
+	// UserTable is deprecated
+	UserTable string
 }
 
 type EtlResultsRecord struct {
@@ -31,7 +35,6 @@ type EtlResultsRecord struct {
 type EtlResultsQueryInput struct {
 	Subreddit string
 	Date      time.Time
-	Limit     int
 }
 
 type RedditResposeArchiveRecord struct {

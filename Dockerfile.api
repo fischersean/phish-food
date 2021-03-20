@@ -2,7 +2,7 @@ FROM golang:1.15 AS builder
 
 WORKDIR /go/src/github.com/fischersean/phish-food
 
-COPY ./cmd/ecs/etl ./cmd
+COPY ./cmd/ecs/api ./cmd
 COPY ./internal ./internal
 
 RUN go get -d -v ./...
