@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 
 	mw "github.com/fischersean/phish-food/internal/api/middleware"
@@ -18,17 +19,20 @@ func main() {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
+	//sess := session.Must(session.NewSession(&aws.Config{
+	//Region: aws.String(os.Getenv("AWS_REGION")),
+	//}))
 
 	var err error
 	db.SharedConnection, err = db.Connect(db.ConnectionInput{
 		Session: sess,
 	})
-
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	http.Handle("/reddit_latest", mw.Logged(routes.HandleGetLatestRedditData))
+	http.Handle("/reddit_latest", mw.ApiKeyRequired(routes.HandleGetLatestRedditData))
+	http.Handle("/", mw.Logged(routes.HandleHealthCheck))
 
 	port := os.Getenv("API_PORT")
 	if port == "" {
@@ -36,6 +40,6 @@ func main() {
 	}
 
 	log.Println("Listening on " + port + "...")
-	log.Fatal(http.ListenAndServe(port, nil))
+	http.ListenAndServe(port, nil)
 
 }

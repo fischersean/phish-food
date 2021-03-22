@@ -17,11 +17,11 @@ func Connect(input ConnectionInput) (conn Connection, err error) {
 	conn.RedditResponseArchiveTable = os.Getenv("REDDIT_ARCHIVE_TABLE")
 
 	if conn.EtlResultsTable == "" {
-		return conn, fmt.Errorf("Could not find requred table name ETL_RESULTS_TABLE")
+		return conn, fmt.Errorf("Could not find required table name ETL_RESULTS_TABLE")
 	}
 
 	if conn.RedditResponseArchiveTable == "" {
-		return conn, fmt.Errorf("Could not find requred table name REDDIT_ARCHIVE_TABLE")
+		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_TABLE")
 	}
 	//conn.YahooTrendingTable = os.Getenv("YAHOO_TRENDING_TABLE")
 	//conn.UserTable = os.Getenv("USER_TABLE")

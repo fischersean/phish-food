@@ -31,9 +31,15 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
-	// We are guaranteed by API Gateway that these headers will be present
-	subreddit := q["subreddit"][0]
-	dateraw := q["datetime"][0]
+
+	subredditParam := q["subreddit"]
+	daterawParam := q["datetime"]
+	if len(subredditParam) == 0 || len(daterawParam) == 0 {
+		http.Error(w, "Invalid request parameters", 400)
+	}
+
+	subreddit := subredditParam[0]
+	dateraw := daterawParam[0]
 	date, err := time.Parse(RawTimeFormat, dateraw)
 	if err != nil {
 		http.Error(w, err.Error(), 400)

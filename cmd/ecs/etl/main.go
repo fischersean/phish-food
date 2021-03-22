@@ -74,8 +74,6 @@ func main() {
 	bucketName := os.Getenv("BUCKET")
 	appId := os.Getenv("APP_ID")
 	appSecret := os.Getenv("APP_SECRET")
-	etlResultsTable := os.Getenv("TABLE")
-	redditResponseArchveTable := os.Getenv("ARCHIVE_TABLE")
 
 	// Add shared session to context
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -90,9 +88,7 @@ func main() {
 
 	// Connect to db
 	conn, err := database.Connect(database.ConnectionInput{
-		Session:                    sess,
-		EtlResultsTable:            etlResultsTable,
-		RedditResponseArchiveTable: redditResponseArchveTable,
+		Session: sess,
 	})
 	if err != nil {
 		log.Fatal(err.Error())

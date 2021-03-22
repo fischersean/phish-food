@@ -102,20 +102,18 @@ class EtlStack(core.NestedStack):
             self,
             "ETLTask",
             cluster=cluster,
-            vpc=vpc,
+            # vpc=vpc,
             scheduled_fargate_task_image_options=ecs_patterns.ScheduledFargateTaskImageOptions(
                 image=ecs.ContainerImage.from_asset(
                     ".",
                     file="Dockerfile.etl",
                 ),
                 environment={
-                    "name": "TRIGGER",
-                    "value": "CloudWatch Events",
                     "BUCKET": tradeables_bucket.bucket_name,
                     "APP_ID": app_id,
                     "APP_SECRET": app_secret,
-                    "TABLE": count_results_table.table_name,
-                    "ARCHIVE_TABLE": reddit_archive_table.table_name,
+                    "ETL_RESULTS_TABLE": count_results_table.table_name,
+                    "REDDIT_ARCHIVE_TABLE": reddit_archive_table.table_name,
                 },
                 cpu=2048,
                 memory_limit_mib=4096,

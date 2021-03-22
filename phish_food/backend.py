@@ -40,7 +40,10 @@ class BackendStack(core.NestedStack):
         api = ApiStack(
             self,
             "API",
+            vpc=vpc,
+            cluster=cluster,
             count_results_table=count_results_table,
+            reddit_archive_table=reddit_archive_table,
             hosted_zone=hosted_zone,
         )
 
