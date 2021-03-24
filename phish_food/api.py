@@ -31,32 +31,23 @@ class ApiStack(core.NestedStack):
 
         super().__init__(scope, construct_id, **kwargs)
 
-        # TODO: This needs to be changed to a dynamic cert request
-        # instead of relying on a cert already existing
-        # self.api = apigateway.RestApi(
-        # self,
-        # "RedditTrendsAPI",
-        # domain_name=apigateway.DomainNameOptions(
-        # domain_name="api.thekettle.org",
-        # certificate=certificates.Certificate.from_certificate_arn(
-        # self,
-        # "DomainCertificateEast2",
-        # "arn:aws:acm:us-east-2:261392311630:certificate/8509c657-9ad9-4c9a-80e2-f11d9535b13d",
-        # ),
-        # security_policy=apigateway.SecurityPolicy.TLS_1_2,
-        # ),
-        # deploy_options=apigateway.StageOptions(
-        # stage_name="prod",
-        # ),
-        # )
-
-        # self.api.root.add_method("ANY")
-
         """
         Reddit data access API
         """
         ecs_service = self.ecs_get_countresults(
-            cluster, count_results_table, reddit_archive_table
+            cluster,
+            count_results_table,
+            reddit_archive_table,
+            hosted_zone,
+        )
+
+        # simple table to hold api keys.
+        api_key_table = dynamodb.Table(
+            self,
+            "ApiKeys",
+            partition_key=dynamodb.Attribute(
+                name="key_hash", type=dynamodb.AttributeType.STRING
+            ),
         )
 
         return
@@ -94,6 +85,7 @@ class ApiStack(core.NestedStack):
         cluster: ecs.Cluster,
         count_results_table: dynamodb.Table,
         reddit_archive_table: dynamodb.Table,
+        hosted_zone: route53.HostedZone,
     ):
 
         # TODO: Make this a env variable at build time
@@ -101,9 +93,9 @@ class ApiStack(core.NestedStack):
         if port == "":
             raise ValueError("Could not find API_PORT env variable")
 
-        cluster.add_capacity(
+        autoscale_group = cluster.add_capacity(
             "DefaultAutoScalingGroup",
-            instance_type=ec2.InstanceType("t2.small"),
+            instance_type=ec2.InstanceType("t2.micro"),
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             can_containers_access_instance_role=True,
         )
@@ -119,15 +111,22 @@ class ApiStack(core.NestedStack):
                     file="Dockerfile.api",
                 ),
                 environment={
-                    "API_PORT": port,
+                    "API_PORT": ":" + port,
                     "ETL_RESULTS_TABLE": count_results_table.table_name,
                     "REDDIT_ARCHIVE_TABLE": reddit_archive_table.table_name,
                     "AWS_REGION": os.getenv("AWS_REGION"),
                 },
-                container_port=8000,
+                container_port=int(port),
                 enable_logging=True,
             ),
-            # public_load_balancer=True,
+            domain_name="api",
+            domain_zone=hosted_zone,
+            certificate=certificates.Certificate.from_certificate_arn(
+                self,
+                "DomainCertificateEast2",
+                "arn:aws:acm:us-east-2:261392311630:certificate/8509c657-9ad9-4c9a-80e2-f11d9535b13d",
+            ),
+            redirect_http=True,
         )
 
         count_results_table.grant_read_write_data(
@@ -136,10 +135,5 @@ class ApiStack(core.NestedStack):
         reddit_archive_table.grant_read_write_data(
             ecs_service.task_definition.task_role
         )
-
-        # # Configure health check
-        # ecs_service.target_group.configure_health_check(
-        # protocol=loadbalancing.Protocol.HTTP,
-        # )
 
         return ecs_service

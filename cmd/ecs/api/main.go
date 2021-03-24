@@ -8,6 +8,7 @@ import (
 	"github.com/fischersean/phish-food/internal/api/routes"
 	db "github.com/fischersean/phish-food/internal/database"
 
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -40,6 +41,6 @@ func main() {
 	}
 
 	log.Println("Listening on " + port + "...")
-	http.ListenAndServe(port, nil)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 
 }

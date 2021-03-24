@@ -28,5 +28,8 @@ class PhishFood(core.Stack):
             domain_name="thekettle.org",
         )
 
+        # TODO: Create both a SSL certificate for us-east-1 and us-east-2
+        # us-east-1 will go to the frontend while us-east-2 will go to the backend
+
         frontend = FrontendStack(self, "Frontend", hosted_zone=zone)
         backend = BackendStack(self, "Backend", vpc=vpc, hosted_zone=zone)
