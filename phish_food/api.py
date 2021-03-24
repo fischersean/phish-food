@@ -2,13 +2,10 @@ import os
 
 from aws_cdk import (
     core,
-    aws_lambda as lambda_,
     aws_s3 as s3,
     aws_dynamodb as dynamodb,
-    aws_apigateway as apigateway,
     aws_certificatemanager as certificates,
     aws_route53 as route53,
-    aws_route53_targets as alias,
     aws_ecs_patterns as ecs_patterns,
     aws_ecs as ecs,
     aws_ec2 as ec2,
@@ -23,10 +20,11 @@ class ApiStack(core.NestedStack):
         construct_id: str,
         vpc: ec2.Vpc,
         cluster: ecs.Cluster,
-        count_results_table: str,
-        reddit_archive_table: str,
+        count_results_table: dynamodb.Table,
+        reddit_archive_table: dynamodb.Table,
+        api_key_table: dynamodb.Table,
         hosted_zone: route53.HostedZone,
-        **kwargs
+        **kwargs,
     ) -> None:
 
         super().__init__(scope, construct_id, **kwargs)
@@ -38,53 +36,18 @@ class ApiStack(core.NestedStack):
             cluster,
             count_results_table,
             reddit_archive_table,
+            api_key_table,
             hosted_zone,
         )
 
-        # simple table to hold api keys.
-        api_key_table = dynamodb.Table(
-            self,
-            "ApiKeys",
-            partition_key=dynamodb.Attribute(
-                name="key_hash", type=dynamodb.AttributeType.STRING
-            ),
-        )
-
         return
-
-    def lambda_get_countresults(self, count_results_table) -> lambda_.Function:
-
-        handler = lambda_.Function(
-            self,
-            "GetCountResultsFunction",
-            runtime=lambda_.Runtime.GO_1_X,
-            code=lambda_.Code.from_asset(
-                ".",
-                bundling=core.BundlingOptions(
-                    user="root",
-                    image=lambda_.Runtime.GO_1_X.bundling_docker_image,
-                    command=[
-                        "bash",
-                        "-c",
-                        "GOOS=linux go build -o /asset-output/main cmd/lambda/get-count-results/main.go",
-                    ],
-                ),
-            ),
-            handler="main",
-            environment={
-                "TABLE": count_results_table.table_name,
-            },
-        )
-
-        count_results_table.grant_read_data(handler)
-
-        return handler
 
     def ecs_get_countresults(
         self,
         cluster: ecs.Cluster,
         count_results_table: dynamodb.Table,
         reddit_archive_table: dynamodb.Table,
+        api_key_table: dynamodb.Table,
         hosted_zone: route53.HostedZone,
     ):
 
@@ -104,16 +67,17 @@ class ApiStack(core.NestedStack):
             self,
             "ApiEcs",
             cluster=cluster,
-            memory_limit_mib=512,
+            memory_limit_mib=250,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_asset(
                     ".",
                     file="Dockerfile.api",
                 ),
                 environment={
-                    "API_PORT": ":" + port,
+                    "API_PORT": port,
                     "ETL_RESULTS_TABLE": count_results_table.table_name,
                     "REDDIT_ARCHIVE_TABLE": reddit_archive_table.table_name,
+                    "API_KEY_TABLE": api_key_table.table_name,
                     "AWS_REGION": os.getenv("AWS_REGION"),
                 },
                 container_port=int(port),

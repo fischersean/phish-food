@@ -16,7 +16,12 @@ func ParseJWT(tokenString string) (jwt.Token, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	keyset, err := jwk.Parse(key)
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := jwt.Parse([]byte(tokenString), jwt.WithKeySet(keyset))
 	return token, err
 }

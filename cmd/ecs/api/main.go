@@ -8,6 +8,8 @@ import (
 	"github.com/fischersean/phish-food/internal/api/routes"
 	db "github.com/fischersean/phish-food/internal/database"
 
+	_ "github.com/fischersean/phish-food/internal/tzinit"
+
 	"fmt"
 	"log"
 	"net/http"
@@ -20,9 +22,6 @@ func main() {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	//sess := session.Must(session.NewSession(&aws.Config{
-	//Region: aws.String(os.Getenv("AWS_REGION")),
-	//}))
 
 	var err error
 	db.SharedConnection, err = db.Connect(db.ConnectionInput{
@@ -32,8 +31,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	http.Handle("/reddit_latest", mw.ApiKeyRequired(routes.HandleGetLatestRedditData))
-	http.Handle("/", mw.Logged(routes.HandleHealthCheck))
+	http.Handle("/reddit_latest", mw.ApiKeyRequired(routes.HandleGetLatestRedditData, "/reddit_latest"))
+	http.HandleFunc("/", routes.HandleHealthCheck)
 
 	port := os.Getenv("API_PORT")
 	if port == "" {
@@ -41,6 +40,6 @@ func main() {
 	}
 
 	log.Println("Listening on " + port + "...")
-	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 
 }

@@ -18,7 +18,6 @@ func HttpServeJSON(w http.ResponseWriter, b []byte) (int, error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	wlen, err := w.Write(b)
-
 	if err != nil {
 		return wlen, err
 	}
@@ -28,13 +27,12 @@ func HttpServeJSON(w http.ResponseWriter, b []byte) (int, error) {
 }
 
 // ServeMarshallableData serves to w the interface. Will throw an error if data cannot be marhalled
-func HttpServeMarahallableData(w http.ResponseWriter, v interface{}) {
-	b, err := json.Marshal(v)
+func HttpServeMarahallableData(w http.ResponseWriter, v interface{}) (int, error) {
 
+	b, err := json.Marshal(v)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
-		return
+		return 0, err
 	}
 
-	HttpServeJSON(w, b)
+	return HttpServeJSON(w, b)
 }
