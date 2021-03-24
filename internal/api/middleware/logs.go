@@ -9,9 +9,9 @@ func logRequest(r *http.Request) {
 	log.Printf("URL: %s | Method: %s | Host: %s", r.URL.EscapedPath(), r.Method, r.Host)
 }
 
-func logResponse(w http.ResponseWriter) {
-	log.Printf("Resonse Headers: %s", w.Header())
-}
+//func logResponse(w http.ResponseWriter) {
+//log.Printf("Resonse Headers: %s", w.Header())
+//}
 
 // Logged logs the details of the request and response
 func Logged(h func(w http.ResponseWriter, r *http.Request)) http.Handler {

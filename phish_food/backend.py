@@ -27,6 +27,7 @@ class BackendStack(core.NestedStack):
 
         count_results_table = self.dynamo_scraperesults()
         reddit_archive_table = self.dynamo_redditarchive()
+        api_key_table = self.dynamo_apikeys()
 
         etl = EtlStack(
             self,
@@ -35,6 +36,7 @@ class BackendStack(core.NestedStack):
             cluster=cluster,
             count_results_table=count_results_table,
             reddit_archive_table=reddit_archive_table,
+            api_key_table=api_key_table,
         )
 
         api = ApiStack(
@@ -44,6 +46,7 @@ class BackendStack(core.NestedStack):
             cluster=cluster,
             count_results_table=count_results_table,
             reddit_archive_table=reddit_archive_table,
+            api_key_table=api_key_table,
             hosted_zone=hosted_zone,
         )
 
@@ -72,6 +75,18 @@ class BackendStack(core.NestedStack):
             ),
             sort_key=dynamodb.Attribute(
                 name="hour", type=dynamodb.AttributeType.NUMBER
+            ),
+        )
+
+        return table
+
+    def dynamo_apikeys(self: core.Construct) -> dynamodb.Table:
+        # parition is sub+YYYY+MM+DD
+        table = dynamodb.Table(
+            self,
+            "ApiKeys",
+            partition_key=dynamodb.Attribute(
+                name="key_hash", type=dynamodb.AttributeType.STRING
             ),
         )
 

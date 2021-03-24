@@ -36,7 +36,7 @@ func CreateApiKeyAndAddToPlan(conn db.Connection, plan string, name string) (key
 	return key, err
 }
 
-func handleGetKey(w http.ResponseWriter, r *http.Request) {
+func HandleGetKey(w http.ResponseWriter, r *http.Request) {
 
 	tokenHeader := r.Header["Authorization"]
 	token, err := api.ParseAndValidateJWT(tokenHeader[0])
@@ -61,7 +61,10 @@ func handleGetKey(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Could not query user table", 500)
 	}
 	if user.ApiKey != "" {
-		w.Write([]byte(user.ApiKey))
+		_, err = w.Write([]byte(user.ApiKey))
+		if err != nil {
+			http.Error(w, "Could not complete request", 500)
+		}
 		return
 	}
 
@@ -85,5 +88,9 @@ func handleGetKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte(user.ApiKey))
+	_, err = w.Write([]byte(user.ApiKey))
+	if err != nil {
+		http.Error(w, "Could not complete request", 500)
+		return
+	}
 }

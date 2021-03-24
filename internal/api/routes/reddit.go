@@ -6,6 +6,8 @@ import (
 
 	"net/http"
 	"time"
+
+	"log"
 )
 
 const (
@@ -16,16 +18,29 @@ const (
 func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
 	// Results are delayed by an hour to make sure the ETL pipeline has enough time
-	date := time.Now().Add(-time.Hour)
-
-	// Local testing only
-	date = date.Add(4 * time.Hour)
-
 	q := r.URL.Query()
-	q.Add("datetime", date.Format(RawTimeFormat))
 
-	r.URL.RawQuery = q.Encode()
-	HandleGetExactRedditData(w, r)
+	subredditParam := q["subreddit"]
+	if len(subredditParam) == 0 {
+		http.Error(w, "Invalid request parameters", 400)
+	}
+
+	subreddit := subredditParam[0]
+
+	conn := db.SharedConnection
+	etlRecord, err := conn.GetLatestEtlResultsRecord(db.EtlResultsQueryInput{
+		Subreddit: subreddit,
+	})
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	_, err = api.HttpServeMarahallableData(w, etlRecord)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 }
 
 func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
@@ -34,6 +49,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 
 	subredditParam := q["subreddit"]
 	daterawParam := q["datetime"]
+	log.Println(daterawParam)
 	if len(subredditParam) == 0 || len(daterawParam) == 0 {
 		http.Error(w, "Invalid request parameters", 400)
 	}
@@ -45,6 +61,8 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
+
+	log.Println(date)
 
 	conn := db.SharedConnection
 	etlRecordResponse, err := conn.GetEtlResultsRecord(db.EtlResultsQueryInput{
@@ -65,6 +83,8 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	api.HttpServeMarahallableData(w, etlRecord)
-	return
+	_, err = api.HttpServeMarahallableData(w, etlRecord)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
 }

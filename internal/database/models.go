@@ -18,6 +18,7 @@ type Connection struct {
 
 	EtlResultsTable            string
 	RedditResponseArchiveTable string
+	ApiKeyTable                string
 
 	// YahooTrendingTable is deprecated
 	YahooTrendingTable string
@@ -44,13 +45,24 @@ type RedditResposeArchiveRecord struct {
 }
 
 type ConnectionInput struct {
-	Session                    *session.Session
+	Session *session.Session
+
+	// All the fields below are currently ignored
 	EtlResultsTable            string
 	YahooTrendingTable         string
 	RedditResponseArchiveTable string
 	UserTable                  string
 }
 
+type ApiKeyQueryInput struct {
+	UnhashedKey string
+}
+
+type ApiKeyRecord struct {
+	KeyHash     string   `json:"key_hash"`
+	Permissions []string `json:"permissions"`
+	Enabled     bool     `json:"enabled"`
+}
 type UserRecord struct {
 	Username      string `json:"id"`
 	ApiKey        string `json:"Key"`
