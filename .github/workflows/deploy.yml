@@ -52,7 +52,7 @@ jobs:
         run: |
           # Install AWS CDK
           npm install aws-cdk
-          aias cdk="node_modules/.bin/cdk"
+          alias cdk="node_modules/.bin/cdk"
           
           pip install -r requirements.txt
           cdk deploy \
