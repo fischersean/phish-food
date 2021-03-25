@@ -57,7 +57,7 @@ jobs:
           node_modules/.bin/cdk deploy \
           --require-approval never \
           --progress events \
-          --no-color true
+          --no-color
         env:
           # App specific variables below
           AWS_REGION: ${{ secrets.AWS_REGION }}
