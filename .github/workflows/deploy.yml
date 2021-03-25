@@ -59,7 +59,7 @@ jobs:
       - name: Deploy
         run: |
           pip install -r requirements.txt
-          cdk deploy \
+          node_modules/.bin/cdk deploy \
           --require-approval never \
           --progress events \
           --no-color true
