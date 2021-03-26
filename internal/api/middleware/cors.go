@@ -17,6 +17,7 @@ func withCORSHandlerFunc(h http.HandlerFunc) http.Handler {
 		w.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Origin")
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
 		w.Header().Add("Access-Control-Allow-Headers", "Authorization")
+		w.Header().Add("Access-Control-Allow-Headers", "x-api-key")
 		if r.Method == "OPTIONS" {
 			return
 		}
