@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"net/http"
-	"os"
 )
 
 func WithCORS(h func(w http.ResponseWriter, r *http.Request)) http.Handler {
@@ -13,7 +12,7 @@ func WithCORS(h func(w http.ResponseWriter, r *http.Request)) http.Handler {
 
 func withCORSHandlerFunc(h http.HandlerFunc) http.Handler {
 	return loggedHandlerFunc(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", os.Getenv("APP_URL"))
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Access-Control-Allow-Origin")
 		w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
 		w.Header().Add("Access-Control-Allow-Headers", "Authorization")

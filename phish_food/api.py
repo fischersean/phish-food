@@ -99,5 +99,8 @@ class ApiStack(core.NestedStack):
         reddit_archive_table.grant_read_write_data(
             ecs_service.task_definition.task_role
         )
+        api_key_table.grant_read_write_data(
+            ecs_service.task_definition.task_role
+        )
 
         return ecs_service

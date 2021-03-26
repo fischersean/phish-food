@@ -2,6 +2,7 @@ package middleware
 
 import (
 	db "github.com/fischersean/phish-food/internal/database"
+	"log"
 	"net/http"
 )
 
@@ -26,6 +27,9 @@ func apiKeyRequiredHandlerFunc(h http.HandlerFunc, route string) http.Handler {
 			UnhashedKey: key,
 		})
 		if err != nil || !keyRecord.Enabled {
+			if err != nil {
+				log.Println(err.Error())
+			}
 			// Although this may be an internal server error, we will not reveal that
 			// incase someone is tryig to brute force a key
 			http.Error(w, "Permission Denied", 401)
@@ -41,6 +45,7 @@ func apiKeyRequiredHandlerFunc(h http.HandlerFunc, route string) http.Handler {
 		}
 
 		if !valid {
+			log.Printf("Invalid key provided: %s", key)
 			http.Error(w, "Permission Denied", 401)
 			return
 		}
