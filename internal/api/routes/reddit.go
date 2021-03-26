@@ -33,12 +33,14 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 		return
 	}
 
 	_, err = api.HttpServeMarahallableData(w, etlRecord)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 	}
 }
@@ -58,6 +60,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	dateraw := daterawParam[0]
 	date, err := time.Parse(RawTimeFormat, dateraw)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 400)
 		return
 	}
@@ -70,6 +73,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 		Date:      date,
 	})
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 		return
 	}
@@ -85,6 +89,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 
 	_, err = api.HttpServeMarahallableData(w, etlRecord)
 	if err != nil {
+		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 	}
 }

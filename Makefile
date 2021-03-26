@@ -20,6 +20,7 @@ build:
 	@cdk synth
 
 deploy:
+	@make lint
 	@cdk deploy
 	@find . -name 'asset.*' -print0 | xargs -0 rm -r
 
