@@ -100,12 +100,4 @@ class ApiStack(core.NestedStack):
             ecs_service.task_definition.task_role
         )
 
-<<<<<<< Updated upstream
-=======
-        # Configure health check
-        ecs_service.target_group.configure_health_check(
-        protocol=loadbalancing.Protocol.HTTP,
-        )
-
->>>>>>> Stashed changes
         return ecs_service
