@@ -4,7 +4,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/fischersean/phish-food/internal/database"
+	"github.com/fischersean/phish-food/internal/etl"
+
+	db "github.com/fischersean/phish-food/internal/database"
 	"github.com/fischersean/phish-food/internal/reddit"
 	"github.com/fischersean/phish-food/internal/stocks"
 
@@ -18,7 +20,7 @@ type subProcessingInput struct {
 	Sub              string
 	TickerPopulation []stocks.Stock
 	AuthToken        reddit.AuthToken
-	DBConnection     database.Connection
+	DBConnection     db.Connection
 	PostLimit        int
 	Wg               *sync.WaitGroup
 }
@@ -35,7 +37,8 @@ var (
 )
 
 const (
-	PostCount int = 10
+	PostCount        int = 100
+	PostAnalyzeCount int = 10
 )
 
 func processSub(input subProcessingInput) {
@@ -43,14 +46,20 @@ func processSub(input subProcessingInput) {
 	defer input.Wg.Done()
 
 	log.Printf("Downloading posts from %s", input.Sub)
-	posts, err := getPosts(input.Sub, input.PostLimit, input.AuthToken, input.DBConnection)
+	posts, err := etl.GetPosts(input.Sub, input.PostLimit, input.AuthToken, input.DBConnection)
 	if err != nil {
 		log.Printf("Could not fetch records for sub %s: %s", input.Sub, err.Error())
 		return
 	}
 
 	log.Printf("Counting posts from %s", input.Sub)
-	report, err := countRef(posts, input.TickerPopulation)
+	var maxCount int
+	if len(posts) < PostAnalyzeCount {
+		maxCount = len(posts) - 1
+	} else {
+		maxCount = PostAnalyzeCount - 1
+	}
+	report, err := etl.CountRef(posts[0:maxCount], input.TickerPopulation)
 	if err != nil {
 		log.Printf("Could not count post ref for %s: %s", input.Sub, err.Error())
 		return
@@ -58,11 +67,12 @@ func processSub(input subProcessingInput) {
 
 	if os.Getenv("DEV") == "YES" {
 		log.Printf("%s: %#v\n\n\n", input.Sub, report)
+		log.Printf("Dev environment detected. Skipping store step")
 		return
 	}
 
 	log.Printf("Storing results from %s", input.Sub)
-	err = putRecord(input.DBConnection, report, input.Sub, time.Now())
+	err = etl.PutRecord(input.DBConnection, report, input.Sub, StartTime)
 	if err != nil {
 		log.Printf("Could not update database for sub %s: %s", input.Sub, err.Error())
 		return
@@ -71,7 +81,7 @@ func processSub(input subProcessingInput) {
 
 func main() {
 
-	bucketName := os.Getenv("BUCKET")
+	bucketName := os.Getenv("TRADEABLES_BUCKET")
 	appId := os.Getenv("APP_ID")
 	appSecret := os.Getenv("APP_SECRET")
 
@@ -81,13 +91,13 @@ func main() {
 	}))
 
 	S3Service := s3.New(sess)
-	tickerPopulation, err := getTradeableSecurities(S3Service, bucketName)
+	tickerPopulation, err := etl.GetTradeableSecurities(S3Service, bucketName)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	// Connect to db
-	conn, err := database.Connect(database.ConnectionInput{
+	conn, err := db.Connect(db.ConnectionInput{
 		Session: sess,
 	})
 	if err != nil {

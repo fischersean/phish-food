@@ -16,7 +16,7 @@ const (
 	GetLatestRedditMaxLookback = 10
 )
 
-func NewRedditResponseArchiveTable(p []reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
+func NewRedditResponseArchiveRecord(p []reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
 
 	for _, v := range p {
 		r.Posts = append(r.Posts, v.Permalink)
@@ -27,7 +27,7 @@ func NewRedditResponseArchiveTable(p []reddit.Post, sub string, t time.Time) (r 
 	return r
 }
 
-func (c *Connection) PutRedditResonseArchiveRecord(record RedditResposeArchiveRecord) (err error) {
+func (c *Connection) PutRedditResponseArchiveRecord(record RedditResposeArchiveRecord) (err error) {
 
 	av, err := dynamodbattribute.MarshalMap(record)
 	if err != nil {
