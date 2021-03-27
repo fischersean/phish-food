@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+const (
+	GetLatestRedditMaxLookback = 10
+)
+
 func NewRedditResponseArchiveTable(p []reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
 
 	for _, v := range p {
@@ -100,8 +104,12 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 
 	var result *dynamodb.QueryOutput
 	count := int64(0)
+	lookbackCount := 0
 
 	for d := input.Date; count < 1; d.Add(-24 * time.Hour) {
+		if lookbackCount > GetLatestRedditMaxLookback {
+			return record, fmt.Errorf("Reached max lookback distance without finding primary key")
+		}
 		qInput := &dynamodb.QueryInput{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 				":v1": {
@@ -119,6 +127,7 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 			return record, err
 		}
 		count = *result.Count
+		lookbackCount += 1
 	}
 
 	err = dynamodbattribute.UnmarshalMap(result.Items[0], &record)
