@@ -1,18 +1,36 @@
-package main
+package etl
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"github.com/fischersean/phish-food/internal/report"
+	db "github.com/fischersean/phish-food/internal/database"
+	"github.com/fischersean/phish-food/internal/reddit"
 	"github.com/fischersean/phish-food/internal/stocks"
-
-	"github.com/fischersean/phish-food/internal/database"
 
 	"time"
 )
 
-func getTradeableSecurities(svc *s3.S3, bucket string) ([]stocks.Stock, error) {
+func GetPosts(sub string, limit int, auth reddit.AuthToken, conn db.Connection) (p []reddit.Post, err error) {
+
+	p, err = reddit.GetHot(sub, limit, auth)
+	if err != nil {
+		return p, err
+	}
+
+	for i := range p {
+		p[i].DownloadTime = time.Now()
+		p[i].Comments, err = reddit.FetchPostComments(p[i], auth)
+		if err != nil {
+			return p, err
+		}
+		go ArchivePost(p[i], sub, conn)
+	}
+
+	return p, err
+}
+
+func GetTradeableSecurities(svc *s3.S3, bucket string) ([]stocks.Stock, error) {
 
 	input0 := &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
@@ -49,11 +67,4 @@ func getTradeableSecurities(svc *s3.S3, bucket string) ([]stocks.Stock, error) {
 
 	return stocksPopulation, nil
 
-}
-
-func putRecord(conn database.Connection, sr []report.StockReport, sub string, t time.Time) (err error) {
-
-	e := database.NewEtlResultsRecord(sr, sub, t)
-	err = conn.PutEtlResultsRecord(e)
-	return err
 }

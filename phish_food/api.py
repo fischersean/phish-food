@@ -21,7 +21,7 @@ class ApiStack(core.NestedStack):
         vpc: ec2.Vpc,
         cluster: ecs.Cluster,
         count_results_table: dynamodb.Table,
-        reddit_archive_table: dynamodb.Table,
+        reddit_archive_bucket: s3.Bucket,
         api_key_table: dynamodb.Table,
         hosted_zone: route53.HostedZone,
         **kwargs,
@@ -35,7 +35,7 @@ class ApiStack(core.NestedStack):
         ecs_service = self.ecs_get_countresults(
             cluster,
             count_results_table,
-            reddit_archive_table,
+            reddit_archive_bucket,
             api_key_table,
             hosted_zone,
         )
@@ -46,7 +46,7 @@ class ApiStack(core.NestedStack):
         self,
         cluster: ecs.Cluster,
         count_results_table: dynamodb.Table,
-        reddit_archive_table: dynamodb.Table,
+        reddit_archive_bucket: s3.Bucket,
         api_key_table: dynamodb.Table,
         hosted_zone: route53.HostedZone,
     ):
@@ -76,7 +76,7 @@ class ApiStack(core.NestedStack):
                 environment={
                     "API_PORT": port,
                     "ETL_RESULTS_TABLE": count_results_table.table_name,
-                    "REDDIT_ARCHIVE_TABLE": reddit_archive_table.table_name,
+                    "REDDIT_ARCHIVE_BUCKET": reddit_archive_bucket.bucket_name,
                     "API_KEY_TABLE": api_key_table.table_name,
                     "AWS_REGION": os.getenv("AWS_REGION"),
                 },
@@ -96,7 +96,7 @@ class ApiStack(core.NestedStack):
         count_results_table.grant_read_write_data(
             ecs_service.task_definition.task_role
         )
-        reddit_archive_table.grant_read_write_data(
+        reddit_archive_bucket.grant_read_write(
             ecs_service.task_definition.task_role
         )
         api_key_table.grant_read_write_data(

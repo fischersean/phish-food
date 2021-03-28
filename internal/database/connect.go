@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/s3"
 
 	"fmt"
 	"os"
@@ -14,15 +15,15 @@ const (
 func Connect(input ConnectionInput) (conn Connection, err error) {
 
 	conn.EtlResultsTable = os.Getenv("ETL_RESULTS_TABLE")
-	conn.RedditResponseArchiveTable = os.Getenv("REDDIT_ARCHIVE_TABLE")
+	conn.RedditResponseArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
 	conn.ApiKeyTable = os.Getenv("API_KEY_TABLE")
 
 	if conn.EtlResultsTable == "" {
 		return conn, fmt.Errorf("Could not find required table name ETL_RESULTS_TABLE")
 	}
 
-	if conn.RedditResponseArchiveTable == "" {
-		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_TABLE")
+	if conn.RedditResponseArchiveBucket == "" {
+		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_BUCKET")
 	}
 
 	if conn.ApiKeyTable == "" {
@@ -31,6 +32,7 @@ func Connect(input ConnectionInput) (conn Connection, err error) {
 
 	conn.Session = input.Session
 	conn.Service = dynamodb.New(conn.Session)
+	conn.S3Service = s3.New(conn.Session)
 
 	return conn, err
 }

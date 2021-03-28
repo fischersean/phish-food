@@ -4,6 +4,7 @@ from aws_cdk import (
     core,
     aws_ecs as ecs,
     aws_ec2 as ec2,
+    aws_s3 as s3,
     aws_dynamodb as dynamodb,
     aws_route53 as route53,
 )
@@ -26,8 +27,9 @@ class BackendStack(core.NestedStack):
         cluster = ecs.Cluster(self, "PhishFood-EcsCluster", vpc=vpc)
 
         count_results_table = self.dynamo_scraperesults()
-        reddit_archive_table = self.dynamo_redditarchive()
+        # reddit_archive_table = self.dynamo_redditarchive()
         api_key_table = self.dynamo_apikeys()
+        reddit_archive_bucket = self.s3_redditarchive()
 
         etl = EtlStack(
             self,
@@ -35,7 +37,7 @@ class BackendStack(core.NestedStack):
             vpc=vpc,
             cluster=cluster,
             count_results_table=count_results_table,
-            reddit_archive_table=reddit_archive_table,
+            reddit_archive_bucket=reddit_archive_bucket,
             api_key_table=api_key_table,
         )
 
@@ -45,7 +47,7 @@ class BackendStack(core.NestedStack):
             vpc=vpc,
             cluster=cluster,
             count_results_table=count_results_table,
-            reddit_archive_table=reddit_archive_table,
+            reddit_archive_bucket=reddit_archive_bucket,
             api_key_table=api_key_table,
             hosted_zone=hosted_zone,
         )
@@ -64,6 +66,14 @@ class BackendStack(core.NestedStack):
         )
 
         return table
+
+    def s3_redditarchive(self) -> s3.Bucket:
+        bucket = s3.Bucket(
+            self,
+            "RedditPostsArchive",
+        )
+
+        return bucket
 
     def dynamo_redditarchive(self: core.Construct) -> dynamodb.Table:
         # parition is sub+YYYY+MM+DD

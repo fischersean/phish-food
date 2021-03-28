@@ -4,39 +4,45 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go/service/s3"
 
 	"github.com/fischersean/phish-food/internal/reddit"
 	"github.com/fischersean/phish-food/internal/report"
 
 	"fmt"
+	//"strings"
+	"bytes"
+	"encoding/json"
 	"time"
 )
 
-func NewRedditResponseArchiveTable(p []reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
+const (
+	GetLatestRedditMaxLookback = 10
+)
 
-	for _, v := range p {
-		r.Posts = append(r.Posts, v.Permalink)
-	}
-	r.Id = fmt.Sprintf("%s_%s", sub, t.Format(DateFormat))
+func NewRedditResponseArchiveRecord(p reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
+
+	r.Post = p
+	r.Permalink = p.Permalink
 	r.Hour = t.Hour()
+	r.Key = fmt.Sprintf("%s_%s/%d/%s.json", sub, t.Format(DateFormat), r.Hour, r.Permalink[:len(r.Permalink)-1])
 
 	return r
 }
 
-func (c *Connection) PutRedditResonseArchiveRecord(record RedditResposeArchiveRecord) (err error) {
+func (c *Connection) PutRedditResponseArchiveRecord(record RedditResposeArchiveRecord) (err error) {
 
-	av, err := dynamodbattribute.MarshalMap(record)
+	buf, err := json.Marshal(record)
 	if err != nil {
 		return err
 	}
 
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String(c.RedditResponseArchiveTable),
+	input := &s3.PutObjectInput{
+		Bucket: aws.String(c.RedditResponseArchiveBucket),
+		Key:    aws.String(record.Key),
+		Body:   bytes.NewReader(buf),
 	}
-
-	_, err = c.Service.PutItem(input)
-
+	_, err = c.S3Service.PutObject(input)
 	return err
 }
 
@@ -100,8 +106,12 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 
 	var result *dynamodb.QueryOutput
 	count := int64(0)
+	lookbackCount := 0
 
 	for d := input.Date; count < 1; d.Add(-24 * time.Hour) {
+		if lookbackCount > GetLatestRedditMaxLookback {
+			return record, fmt.Errorf("Reached max lookback distance without finding primary key")
+		}
 		qInput := &dynamodb.QueryInput{
 			ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 				":v1": {
@@ -119,6 +129,7 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 			return record, err
 		}
 		count = *result.Count
+		lookbackCount += 1
 	}
 
 	err = dynamodbattribute.UnmarshalMap(result.Items[0], &record)

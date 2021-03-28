@@ -34,7 +34,7 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "Could not find records", 500)
 		return
 	}
 
@@ -74,7 +74,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), 500)
+		http.Error(w, "Could not find records", 500)
 		return
 	}
 

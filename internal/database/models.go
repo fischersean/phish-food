@@ -3,7 +3,9 @@ package database
 import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/s3"
 
+	"github.com/fischersean/phish-food/internal/reddit"
 	"github.com/fischersean/phish-food/internal/report"
 
 	"time"
@@ -16,9 +18,12 @@ type Connection struct {
 	// Service is the shared dynamo db connection
 	Service *dynamodb.DynamoDB
 
-	EtlResultsTable            string
-	RedditResponseArchiveTable string
-	ApiKeyTable                string
+	// S3Service is the shared S3 connection
+	S3Service *s3.S3
+
+	EtlResultsTable             string
+	RedditResponseArchiveBucket string
+	ApiKeyTable                 string
 
 	// YahooTrendingTable is deprecated
 	YahooTrendingTable string
@@ -39,9 +44,10 @@ type EtlResultsQueryInput struct {
 }
 
 type RedditResposeArchiveRecord struct {
-	Id    string   `json:"id"`
-	Hour  int      `json:"hour"`
-	Posts []string `json:"data"`
+	Key       string      `json:"key"`
+	Hour      int         `json:"hour"`
+	Permalink string      `json:"permalink"`
+	Post      reddit.Post `json:"data"`
 }
 
 type ConnectionInput struct {
