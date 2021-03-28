@@ -91,8 +91,6 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println(date)
-
 	conn := db.SharedConnection
 	etlRecordResponse, err := conn.GetEtlResultsRecord(db.EtlResultsQueryInput{
 		Subreddit: subreddit,

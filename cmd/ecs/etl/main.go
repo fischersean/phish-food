@@ -9,6 +9,7 @@ import (
 	db "github.com/fischersean/phish-food/internal/database"
 	"github.com/fischersean/phish-food/internal/reddit"
 	"github.com/fischersean/phish-food/internal/stocks"
+	_ "github.com/fischersean/phish-food/internal/tzinit"
 
 	"log"
 	"os"

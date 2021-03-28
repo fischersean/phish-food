@@ -31,6 +31,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	http.Handle("/reddit", mw.ApiKeyRequired(routes.HandleGetExactRedditData, "/reddit"))
 	http.Handle("/reddit_latest", mw.ApiKeyRequired(routes.HandleGetLatestRedditData, "/reddit_latest"))
 	http.HandleFunc("/", routes.HandleHealthCheck)
 
