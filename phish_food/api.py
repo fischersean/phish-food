@@ -56,18 +56,26 @@ class ApiStack(core.NestedStack):
         if port == "":
             raise ValueError("Could not find API_PORT env variable")
 
+        MAX_CAPACITY = 5
+
         autoscale_group = cluster.add_capacity(
             "DefaultAutoScalingGroup",
             instance_type=ec2.InstanceType("t2.micro"),
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             can_containers_access_instance_role=True,
+            max_capacity=MAX_CAPACITY,
+        )
+
+        autoscale_group.scale_on_cpu_utilization(
+            "CpuUtilizationScaler",
+            target_utilization_percent=95,
         )
 
         ecs_service = ecs_patterns.ApplicationLoadBalancedEc2Service(
             self,
             "ApiEcs",
             cluster=cluster,
-            memory_limit_mib=250,
+            memory_reservation_mib=450,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_asset(
                     ".",
@@ -91,6 +99,10 @@ class ApiStack(core.NestedStack):
                 "arn:aws:acm:us-east-2:261392311630:certificate/8509c657-9ad9-4c9a-80e2-f11d9535b13d",
             ),
             redirect_http=True,
+        )
+
+        ecs_service.service.auto_scale_task_count(
+            max_capacity=MAX_CAPACITY,
         )
 
         count_results_table.grant_read_write_data(
