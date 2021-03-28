@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/fischersean/phish-food/internal/api"
 	db "github.com/fischersean/phish-food/internal/database"
+	"github.com/fischersean/phish-food/internal/etl"
 
 	"net/http"
 	"time"
@@ -15,6 +16,20 @@ const (
 	RawTimeFormat = time.RFC3339
 )
 
+// subIsSupported returns whether the subreddit can be found in the ETL database
+// Case Sensitive
+func subIsSupported(subreddit string) bool {
+
+	var supported bool
+	for _, v := range etl.FetchTargets {
+		if subreddit == v {
+			return true
+		}
+	}
+
+	return supported
+}
+
 func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
 	// Results are delayed by an hour to make sure the ETL pipeline has enough time
@@ -23,9 +38,14 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 	subredditParam := q["subreddit"]
 	if len(subredditParam) == 0 {
 		http.Error(w, "Invalid request parameters", 400)
+		return
 	}
 
 	subreddit := subredditParam[0]
+	if !subIsSupported(subreddit) {
+		http.Error(w, "Requested subreddit is not supported", 400)
+		return
+	}
 
 	conn := db.SharedConnection
 	etlRecord, err := conn.GetLatestEtlResultsRecord(db.EtlResultsQueryInput{
@@ -54,9 +74,15 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	log.Println(daterawParam)
 	if len(subredditParam) == 0 || len(daterawParam) == 0 {
 		http.Error(w, "Invalid request parameters", 400)
+		return
 	}
 
 	subreddit := subredditParam[0]
+	if !subIsSupported(subreddit) {
+		http.Error(w, "Requested subreddit is not supported", 400)
+		return
+	}
+
 	dateraw := daterawParam[0]
 	date, err := time.Parse(RawTimeFormat, dateraw)
 	if err != nil {

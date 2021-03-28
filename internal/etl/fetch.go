@@ -11,6 +11,14 @@ import (
 	"time"
 )
 
+var FetchTargets = []string{
+	"stocks",
+	"wallstreetbets",
+	"investing",
+	"Wallstreetbetsnew",
+	"WallStreetbetsELITE",
+}
+
 func GetPosts(sub string, limit int, auth reddit.AuthToken, conn db.Connection) (p []reddit.Post, err error) {
 
 	p, err = reddit.GetHot(sub, limit, auth)

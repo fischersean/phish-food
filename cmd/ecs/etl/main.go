@@ -26,13 +26,6 @@ type subProcessingInput struct {
 }
 
 var (
-	TargetSubs []string = []string{
-		"stocks",
-		"wallstreetbets",
-		"investing",
-		"Wallstreetbetsnew",
-		"WallStreetbetsELITE",
-	}
 	StartTime time.Time = time.Now()
 )
 
@@ -110,9 +103,9 @@ func main() {
 	}
 
 	wg := new(sync.WaitGroup)
-	wg.Add(len(TargetSubs))
+	wg.Add(len(etl.FetchTargets))
 
-	for _, sub := range TargetSubs {
+	for _, sub := range etl.FetchTargets {
 		input := subProcessingInput{
 			Wg:               wg,
 			Sub:              sub,
