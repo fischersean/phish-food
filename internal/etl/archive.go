@@ -10,17 +10,13 @@ import (
 	"time"
 )
 
-func ArchivePost(p []reddit.Post, sub string, conn db.Connection) {
-
-	if len(p) == 0 {
-		return
-	}
+func ArchivePost(p reddit.Post, sub string, conn db.Connection) {
 
 	var archiveTime time.Time
-	if p[0].DownloadTime.IsZero() {
+	if p.DownloadTime.IsZero() {
 		archiveTime = time.Now()
 	} else {
-		archiveTime = p[0].DownloadTime
+		archiveTime = p.DownloadTime
 	}
 	record := db.NewRedditResponseArchiveRecord(p, sub, archiveTime)
 

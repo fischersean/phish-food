@@ -24,9 +24,8 @@ func GetPosts(sub string, limit int, auth reddit.AuthToken, conn db.Connection) 
 		if err != nil {
 			return p, err
 		}
+		go ArchivePost(p[i], sub, conn)
 	}
-
-	go ArchivePost(p, sub, conn)
 
 	return p, err
 }
