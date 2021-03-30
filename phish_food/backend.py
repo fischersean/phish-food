@@ -65,6 +65,16 @@ class BackendStack(core.NestedStack):
             ),
         )
 
+        table.auto_scale_write_capacity(
+            min_capacity=5,
+            max_capacity=50,
+        )
+
+        table.auto_scale_read_capacity(
+            min_capacity=5,
+            max_capacity=50,
+        )
+
         return table
 
     def s3_redditarchive(self) -> s3.Bucket:
@@ -98,6 +108,12 @@ class BackendStack(core.NestedStack):
             partition_key=dynamodb.Attribute(
                 name="key_hash", type=dynamodb.AttributeType.STRING
             ),
+            write_capacity=1,
+        )
+
+        table.auto_scale_read_capacity(
+            min_capacity=5,
+            max_capacity=50,
         )
 
         return table
