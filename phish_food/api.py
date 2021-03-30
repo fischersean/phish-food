@@ -60,7 +60,7 @@ class ApiStack(core.NestedStack):
 
         autoscale_group = cluster.add_capacity(
             "DefaultAutoScalingGroup",
-            instance_type=ec2.InstanceType("t2.micro"),
+            instance_type=ec2.InstanceType("t3a.micro"),
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
             can_containers_access_instance_role=True,
             max_capacity=MAX_CAPACITY,
