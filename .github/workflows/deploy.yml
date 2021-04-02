@@ -26,11 +26,6 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2.2.1
 
-      - name: Install Dependencies
-        run: |
-          npm install aws-cdk
-          pip install -r requirements.txt
-
       - name: Build
         run: |
           # install npm packages and build Vue app
@@ -48,6 +43,12 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install Deploy Dependencies
+        run: |
+          npm install aws-cdk
+          pip install -r requirements.txt
+
 
       - name: Deploy
         run: |
