@@ -16,11 +16,11 @@ import (
 	"os"
 )
 
-func apiKeyValidation(r *http.Request) (valid bool, err error) {
+func apiKeyValidation(r *http.Request) (valid bool) {
 	route := r.URL.EscapedPath()
 	key := r.Header.Get("x-api-key")
 	if key == "" {
-		return valid, err
+		return valid
 	}
 
 	conn := db.SharedConnection
@@ -29,7 +29,7 @@ func apiKeyValidation(r *http.Request) (valid bool, err error) {
 	})
 	if err != nil || !keyRecord.Enabled {
 		log.Printf("Authentication Error: %s", err.Error())
-		return valid, err
+		return valid
 	}
 
 	for _, v := range keyRecord.Permissions {
@@ -39,7 +39,7 @@ func apiKeyValidation(r *http.Request) (valid bool, err error) {
 		}
 	}
 
-	return valid, err
+	return valid
 }
 
 func main() {

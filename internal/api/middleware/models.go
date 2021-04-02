@@ -19,5 +19,5 @@ type CorsOptions struct {
 type AuthenticationOptions struct {
 	Required bool
 	// ValidationFunc should return true or false based on whether the request is authenticated
-	ValidationFunc func(*http.Request) (bool, error)
+	ValidationFunc func(*http.Request) bool
 }

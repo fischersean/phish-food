@@ -49,12 +49,7 @@ func withLogging(h http.HandlerFunc) http.HandlerFunc {
 
 func withAuthentication(h http.HandlerFunc, options AuthenticationOptions) http.HandlerFunc {
 	return http.HandlerFunc(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		validated, err := options.ValidationFunc(r)
-		if err != nil {
-			http.Error(w, "Forbidden", http.StatusForbidden)
-			return
-		}
-
+		validated := options.ValidationFunc(r)
 		if validated {
 			h(w, r)
 		} else {
@@ -78,6 +73,7 @@ func withCors(h http.HandlerFunc, options CorsOptions) http.HandlerFunc {
 			return
 		}
 
+		// TODO: Check to make sure request origin is in AllowOrigin list
 		h(w, r) // call original
 	})
 }
