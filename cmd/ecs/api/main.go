@@ -4,9 +4,10 @@ import (
 	//"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 
-	mw "github.com/fischersean/phish-food/internal/api/middleware"
 	"github.com/fischersean/phish-food/internal/api/routes"
 	db "github.com/fischersean/phish-food/internal/database"
+	"github.com/fischersean/phish-food/internal/router"
+	mw "github.com/fischersean/phish-food/internal/router/middleware"
 
 	_ "github.com/fischersean/phish-food/internal/tzinit"
 
@@ -14,9 +15,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 )
 
 func apiKeyValidation(r *http.Request) (valid bool) {
+
 	route := r.URL.EscapedPath()
 	key := r.Header.Get("x-api-key")
 	if key == "" {
@@ -33,7 +36,12 @@ func apiKeyValidation(r *http.Request) (valid bool) {
 	}
 
 	for _, v := range keyRecord.Permissions {
-		if v == route {
+		r, err := regexp.Compile(v)
+		if err != nil {
+			log.Printf("Could not compile permissions regex: %s", v)
+			return
+		}
+		if len(r.FindString(route)) > 0 {
 			valid = true
 			break
 		}
@@ -77,10 +85,10 @@ func main() {
 			ValidationFunc: apiKeyValidation,
 		},
 	}
-	http.Handle("/reddit", mw.Register(routes.HandleGetExactRedditData, routeOptions))
-	http.Handle("/reddit_latest", mw.Register(routes.HandleGetLatestRedditData, routeOptions))
 
-	http.HandleFunc("/", routes.HandleHealthCheck)
+	router.Handle("/reddit/*([^/]+)/latest", mw.WithOptions(routes.HandleGetLatestRedditData, routeOptions))
+	router.Handle("/reddit/*([^/]+)", mw.WithOptions(routes.HandleGetExactRedditData, routeOptions))
+	router.HandleFunc("/", routes.HandleHealthCheck)
 
 	port := os.Getenv("API_PORT")
 	if port == "" {
@@ -88,6 +96,6 @@ func main() {
 	}
 
 	log.Println("Listening on " + port + "...")
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), http.HandlerFunc(router.Serve)))
 
 }

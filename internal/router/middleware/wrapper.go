@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func Register(h http.HandlerFunc, options HandlerOptions) http.Handler {
+func WithOptions(h http.HandlerFunc, options HandlerOptions) http.Handler {
 
 	// Options are added in the reverse order that they need to be evaluated at request time
 	// Authentication always happens after CORS

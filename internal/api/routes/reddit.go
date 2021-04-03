@@ -4,11 +4,11 @@ import (
 	"github.com/fischersean/phish-food/internal/api"
 	db "github.com/fischersean/phish-food/internal/database"
 	"github.com/fischersean/phish-food/internal/etl"
-
-	"net/http"
-	"time"
+	"github.com/fischersean/phish-food/internal/router"
 
 	"log"
+	"net/http"
+	"time"
 )
 
 const (
@@ -32,16 +32,11 @@ func subIsSupported(subreddit string) bool {
 
 func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
-	// Results are delayed by an hour to make sure the ETL pipeline has enough time
-	q := r.URL.Query()
-
-	subredditParam := q["subreddit"]
-	if len(subredditParam) == 0 {
+	subreddit := router.GetField(r, 0)
+	if subreddit == "" {
 		http.Error(w, "Invalid request parameters", 400)
 		return
 	}
-
-	subreddit := subredditParam[0]
 	if !subIsSupported(subreddit) {
 		http.Error(w, "Requested subreddit is not supported", 400)
 		return
@@ -69,15 +64,13 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 
 	q := r.URL.Query()
 
-	subredditParam := q["subreddit"]
+	subreddit := router.GetField(r, 0)
 	daterawParam := q["datetime"]
 	log.Println(daterawParam)
-	if len(subredditParam) == 0 || len(daterawParam) == 0 {
+	if subreddit == "" || len(daterawParam) == 0 {
 		http.Error(w, "Invalid request parameters", 400)
 		return
 	}
-
-	subreddit := subredditParam[0]
 	if !subIsSupported(subreddit) {
 		http.Error(w, "Requested subreddit is not supported", 400)
 		return
@@ -116,4 +109,24 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		http.Error(w, err.Error(), 500)
 	}
+}
+
+func HandleGetArchivedRedditData(w http.ResponseWriter, r *http.Request) {
+
+	q := r.URL.Query()
+
+	daterawParam := q["datetime"]
+	permalinkParam := q["permalink"]
+	log.Println(daterawParam)
+	if len(permalinkParam) == 0 || len(daterawParam) == 0 {
+		http.Error(w, "Invalid request parameters", 400)
+		return
+	}
+
+	//subreddit := subredditParam[0]
+	//if !subIsSupported(subreddit) {
+	//http.Error(w, "Requested subreddit is not supported", 400)
+	//return
+	//}
+
 }
