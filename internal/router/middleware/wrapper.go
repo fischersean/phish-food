@@ -25,7 +25,7 @@ func WithOptions(h http.HandlerFunc, options HandlerOptions) http.Handler {
 }
 
 func withMethodValidation(h http.HandlerFunc, methods []string) http.HandlerFunc {
-	return http.HandlerFunc(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var methodFound bool
 		for _, m := range methods {
 			if m == r.Method {
@@ -37,25 +37,25 @@ func withMethodValidation(h http.HandlerFunc, methods []string) http.HandlerFunc
 		} else {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
-	}))
+	})
 }
 
 func withLogging(h http.HandlerFunc) http.HandlerFunc {
-	return http.HandlerFunc(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logRequest(r)
 		h(w, r) // call original
-	}))
+	})
 }
 
 func withAuthentication(h http.HandlerFunc, options AuthenticationOptions) http.HandlerFunc {
-	return http.HandlerFunc(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		validated := options.ValidationFunc(r)
 		if validated {
 			h(w, r)
 		} else {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		}
-	}))
+	})
 }
 
 func withCors(h http.HandlerFunc, options CorsOptions) http.HandlerFunc {

@@ -18,9 +18,9 @@ func ArchivePost(p reddit.Post, sub string, conn db.Connection) {
 	} else {
 		archiveTime = p.DownloadTime
 	}
-	record := db.NewRedditResponseArchiveRecord(p, sub, archiveTime)
+	record := db.NewRedditPostArchiveRecord(p, sub, archiveTime)
 
-	err := conn.PutRedditResponseArchiveRecord(record)
+	err := conn.PutRedditPostArchiveRecord(record)
 	if err != nil {
 		log.Printf("Could not archive posts from %s: %s", sub, err.Error())
 	}

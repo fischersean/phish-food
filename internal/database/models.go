@@ -21,9 +21,9 @@ type Connection struct {
 	// S3Service is the shared S3 connection
 	S3Service *s3.S3
 
-	EtlResultsTable             string
-	RedditResponseArchiveBucket string
-	ApiKeyTable                 string
+	EtlResultsTable         string
+	RedditPostArchiveBucket string
+	ApiKeyTable             string
 
 	// YahooTrendingTable is deprecated
 	YahooTrendingTable string
@@ -43,21 +43,30 @@ type EtlResultsQueryInput struct {
 	Date      time.Time
 }
 
-type RedditResposeArchiveRecord struct {
+type RedditPostArchiveRecord struct {
 	Key       string      `json:"key"`
 	Hour      int         `json:"hour"`
-	Permalink string      `json:"permalink"`
+	Permalink string      `json:"permalink,omitempty"`
 	Post      reddit.Post `json:"data"`
+}
+
+type RedditPostArchiveListInput struct {
+	Subreddit string
+	Date      time.Time
+}
+
+type RedditPostArchiveQueryInput struct {
+	Key string
 }
 
 type ConnectionInput struct {
 	Session *session.Session
 
 	// All the fields below are currently ignored
-	EtlResultsTable            string
-	YahooTrendingTable         string
-	RedditResponseArchiveTable string
-	UserTable                  string
+	EtlResultsTable        string
+	YahooTrendingTable     string
+	RedditPostArchiveTable string
+	UserTable              string
 }
 
 type ApiKeyQueryInput struct {

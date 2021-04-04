@@ -34,11 +34,11 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
 	subreddit := router.GetField(r, 0)
 	if subreddit == "" {
-		http.Error(w, "Invalid request parameters", 400)
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
 		return
 	}
 	if !subIsSupported(subreddit) {
-		http.Error(w, "Requested subreddit is not supported", 400)
+		http.Error(w, "Requested subreddit is not supported", http.StatusBadRequest)
 		return
 	}
 
@@ -49,14 +49,14 @@ func HandleGetLatestRedditData(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, "Could not find records", 500)
+		http.Error(w, "Could not find records", http.StatusInternalServerError)
 		return
 	}
 
 	_, err = api.HttpServeMarahallableData(w, etlRecord)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -68,11 +68,11 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	daterawParam := q["datetime"]
 	log.Println(daterawParam)
 	if subreddit == "" || len(daterawParam) == 0 {
-		http.Error(w, "Invalid request parameters", 400)
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
 		return
 	}
 	if !subIsSupported(subreddit) {
-		http.Error(w, "Requested subreddit is not supported", 400)
+		http.Error(w, "Requested subreddit is not supported", http.StatusBadRequest)
 		return
 	}
 
@@ -80,7 +80,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	date, err := time.Parse(RawTimeFormat, dateraw)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), 400)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -91,7 +91,7 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, "Could not find records", 500)
+		http.Error(w, "Could not find records", http.StatusInternalServerError)
 		return
 	}
 
@@ -107,26 +107,74 @@ func HandleGetExactRedditData(w http.ResponseWriter, r *http.Request) {
 	_, err = api.HttpServeMarahallableData(w, etlRecord)
 	if err != nil {
 		log.Println(err.Error())
-		http.Error(w, err.Error(), 500)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func HandleGetArchivedRedditData(w http.ResponseWriter, r *http.Request) {
 
-	q := r.URL.Query()
-
-	daterawParam := q["datetime"]
-	permalinkParam := q["permalink"]
-	log.Println(daterawParam)
-	if len(permalinkParam) == 0 || len(daterawParam) == 0 {
-		http.Error(w, "Invalid request parameters", 400)
+	key := router.GetField(r, 0)
+	if key == "" {
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
 		return
 	}
 
-	//subreddit := subredditParam[0]
-	//if !subIsSupported(subreddit) {
-	//http.Error(w, "Requested subreddit is not supported", 400)
-	//return
-	//}
+	conn := db.SharedConnection
+	record, err := conn.GetRedditPostArchiveRecord(db.RedditPostArchiveQueryInput{
+		Key: key + ".json",
+	})
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Could not fetch records", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = api.HttpServeMarahallableData(w, record)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func HandleListArchivedRedditData(w http.ResponseWriter, r *http.Request) {
+
+	q := r.URL.Query()
+
+	daterawParam := q["datetime"]
+	subreddit := router.GetField(r, 0)
+	if subreddit == "" || len(daterawParam) == 0 {
+		http.Error(w, "Invalid request parameters", http.StatusBadRequest)
+		return
+	}
+	if !subIsSupported(subreddit) {
+		http.Error(w, "Requested subreddit is not supported", http.StatusBadRequest)
+		return
+	}
+
+	dateraw := daterawParam[0]
+	date, err := time.Parse(RawTimeFormat, dateraw)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Could not parse datetime", http.StatusBadRequest)
+		return
+	}
+
+	conn := db.SharedConnection
+	manifest, err := conn.ListRedditPostArchiveRecord(db.RedditPostArchiveListInput{
+		Subreddit: subreddit,
+		Date:      date,
+	})
+
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Could not list records", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = api.HttpServeMarahallableData(w, manifest)
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Could not return records", http.StatusInternalServerError)
+	}
 
 }

@@ -42,5 +42,8 @@ type CtxKey struct{}
 
 func GetField(r *http.Request, index int) string {
 	fields := r.Context().Value(CtxKey{}).([]string)
+	if len(fields) < index-1 {
+		return ""
+	}
 	return fields[index]
 }

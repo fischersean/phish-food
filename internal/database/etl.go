@@ -13,6 +13,7 @@ import (
 	//"strings"
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"time"
 )
 
@@ -20,17 +21,22 @@ const (
 	GetLatestRedditMaxLookback = 10
 )
 
-func NewRedditResponseArchiveRecord(p reddit.Post, sub string, t time.Time) (r RedditResposeArchiveRecord) {
+func NewRedditPostArchiveRecord(p reddit.Post, sub string, t time.Time) (r RedditPostArchiveRecord) {
 
 	r.Post = p
 	r.Permalink = p.Permalink
 	r.Hour = t.Hour()
-	r.Key = fmt.Sprintf("%s_%s/%d/%s.json", sub, t.Format(DateFormat), r.Hour, r.Permalink[:len(r.Permalink)-1])
+	r.Key = fmt.Sprintf("%s_%s/%d/%s.json",
+		sub,
+		t.Format(DateFormat),
+		r.Hour,
+		r.Permalink[:len(r.Permalink)-1],
+	)
 
 	return r
 }
 
-func (c *Connection) PutRedditResponseArchiveRecord(record RedditResposeArchiveRecord) (err error) {
+func (c *Connection) PutRedditPostArchiveRecord(record RedditPostArchiveRecord) (err error) {
 
 	buf, err := json.Marshal(record)
 	if err != nil {
@@ -38,12 +44,64 @@ func (c *Connection) PutRedditResponseArchiveRecord(record RedditResposeArchiveR
 	}
 
 	input := &s3.PutObjectInput{
-		Bucket: aws.String(c.RedditResponseArchiveBucket),
+		Bucket: aws.String(c.RedditPostArchiveBucket),
 		Key:    aws.String(record.Key),
 		Body:   bytes.NewReader(buf),
 	}
 	_, err = c.S3Service.PutObject(input)
 	return err
+}
+
+func (c *Connection) ListRedditPostArchiveRecord(input RedditPostArchiveListInput) (keys []string, err error) {
+
+	startAfterPrefix := fmt.Sprintf("%s_%s/%d/r/%s/comments",
+		input.Subreddit,
+		input.Date.Format(DateFormat),
+		input.Date.Hour(),
+		input.Subreddit,
+	)
+
+	listInput := &s3.ListObjectsV2Input{
+		Bucket: aws.String(c.RedditPostArchiveBucket),
+		Prefix: aws.String(startAfterPrefix),
+	}
+
+	objectList, err := c.S3Service.ListObjectsV2(listInput)
+	if err != nil {
+		return keys, err
+	}
+
+	for _, v := range objectList.Contents {
+		keys = append(keys, *v.Key)
+	}
+
+	return keys, err
+}
+
+func (c *Connection) GetRedditPostArchiveRecord(input RedditPostArchiveQueryInput) (record RedditPostArchiveRecord, err error) {
+
+	getObjectInput := &s3.GetObjectInput{
+		Bucket: aws.String(c.RedditPostArchiveBucket),
+		Key:    aws.String(input.Key),
+	}
+
+	object, err := c.S3Service.GetObject(getObjectInput)
+	if err != nil {
+		return record, err
+	}
+	defer object.Body.Close()
+
+	buf, err := ioutil.ReadAll(object.Body)
+	if err != nil {
+		return record, err
+	}
+
+	err = json.Unmarshal(buf, &record)
+	if err != nil {
+		return record, err
+	}
+
+	return record, err
 }
 
 func NewEtlResultsRecord(sr []report.StockReport, sub string, t time.Time) (e EtlResultsRecord) {

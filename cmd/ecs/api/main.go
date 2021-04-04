@@ -88,6 +88,10 @@ func main() {
 
 	router.Handle("/reddit/*([^/]+)/latest", mw.WithOptions(routes.HandleGetLatestRedditData, routeOptions))
 	router.Handle("/reddit/*([^/]+)", mw.WithOptions(routes.HandleGetExactRedditData, routeOptions))
+
+	router.Handle("/reddit/archive/*([a-zA-Z_0-9/]+).json", mw.WithOptions(routes.HandleGetArchivedRedditData, routeOptions))
+	router.Handle("/reddit/archive/*([^/]+)/manifest", mw.WithOptions(routes.HandleListArchivedRedditData, routeOptions))
+
 	router.HandleFunc("/", routes.HandleHealthCheck)
 
 	port := os.Getenv("API_PORT")

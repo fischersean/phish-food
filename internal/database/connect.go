@@ -15,14 +15,14 @@ const (
 func Connect(input ConnectionInput) (conn Connection, err error) {
 
 	conn.EtlResultsTable = os.Getenv("ETL_RESULTS_TABLE")
-	conn.RedditResponseArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
+	conn.RedditPostArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
 	conn.ApiKeyTable = os.Getenv("API_KEY_TABLE")
 
 	if conn.EtlResultsTable == "" {
 		return conn, fmt.Errorf("Could not find required table name ETL_RESULTS_TABLE")
 	}
 
-	if conn.RedditResponseArchiveBucket == "" {
+	if conn.RedditPostArchiveBucket == "" {
 		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_BUCKET")
 	}
 
