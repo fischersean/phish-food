@@ -10,16 +10,6 @@ const routes = [
     name: "Hero",
     component: Home,
   },
-  //{
-  //path: "/docs",
-  //name: "Documentation",
-  //component: () => import("../views/Docs.vue"),
-  //},
-  //{
-  //path: "/buy",
-  //name: "Buy",
-  //component: () => import("../views/Buy.vue"),
-  //},
 ];
 
 const router = new VueRouter({
