@@ -39,7 +39,7 @@ func apiKeyValidation(r *http.Request) (valid bool) {
 		r, err := regexp.Compile(v)
 		if err != nil {
 			log.Printf("Could not compile permissions regex: %s", v)
-			return
+			break
 		}
 		if len(r.FindString(route)) > 0 {
 			valid = true
