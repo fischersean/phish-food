@@ -1,4 +1,4 @@
-# phish-food
+# PhishFood
 
 *Like the Ben & Jerry's Ice Cream*
 
