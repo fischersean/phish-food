@@ -8,7 +8,11 @@
         Access to the same information available to the more "sophisticated"
         investors, at the same time
       </p>
-      <Button class="mt-5">Get API Access →</Button>
+      <Button
+        onClick="parent.open('https://rapidapi.com/fischersean/api/thekettle/')"
+        class="mt-5"
+        >Get API Access →</Button
+      >
     </div>
   </div>
 </template>
