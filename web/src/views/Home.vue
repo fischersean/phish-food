@@ -5,7 +5,6 @@
       <AboutCard class="py-10" />
       <ExampleResponse />
     </div>
-    <RichQuotes />
   </div>
 </template>
 
@@ -14,7 +13,6 @@
 import Hero from "@/components/Hero.vue";
 import AboutCard from "@/components/AboutCard.vue";
 import ExampleResponse from "@/components/ExampleResponse.vue";
-import RichQuotes from "@/components/RichQuotes.vue";
 
 export default {
   name: "Home",
@@ -22,7 +20,6 @@ export default {
     Hero,
     AboutCard,
     ExampleResponse,
-    RichQuotes,
   },
 };
 </script>
