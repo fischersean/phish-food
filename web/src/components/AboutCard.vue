@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex flex-col">
+    <div class="flex flex-col text-center">
       <h1 class="text-2xl font-bold mb-5">
         Trending data covering all of the major stock-trading subreddits
       </h1>
