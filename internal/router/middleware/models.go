@@ -13,7 +13,8 @@ type HandlerOptions struct {
 type CorsOptions struct {
 	Enabled      bool
 	AllowHeaders []string
-	AllowOrigin  []string
+	AllowOrigins []string
+	AllowMethods []string
 }
 
 type AuthenticationOptions struct {

@@ -76,8 +76,11 @@ func main() {
 				"Content-Type",
 				"x-api-key",
 			},
-			AllowOrigin: []string{
+			AllowOrigins: []string{
 				"*",
+			},
+			AllowMethods: []string{
+				http.MethodGet,
 			},
 		},
 		Authentication: mw.AuthenticationOptions{

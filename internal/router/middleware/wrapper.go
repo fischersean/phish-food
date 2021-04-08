@@ -4,6 +4,11 @@ import (
 	"net/http"
 )
 
+// Error is a shorthand for writing standard error messages to the response writer
+func Error(w http.ResponseWriter, status int) {
+	http.Error(w, http.StatusText(status), status)
+}
+
 func WithOptions(h http.HandlerFunc, options HandlerOptions) http.Handler {
 
 	// Options are added in the reverse order that they need to be evaluated at request time
@@ -35,7 +40,7 @@ func withMethodValidation(h http.HandlerFunc, methods []string) http.HandlerFunc
 		if methodFound {
 			h(w, r) // call original
 		} else {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			Error(w, http.StatusMethodNotAllowed)
 		}
 	})
 }
@@ -53,7 +58,7 @@ func withAuthentication(h http.HandlerFunc, options AuthenticationOptions) http.
 		if validated {
 			h(w, r)
 		} else {
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			Error(w, http.StatusForbidden)
 		}
 	})
 }
@@ -61,19 +66,42 @@ func withAuthentication(h http.HandlerFunc, options AuthenticationOptions) http.
 func withCors(h http.HandlerFunc, options CorsOptions) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		for _, origin := range options.AllowOrigin {
+		var requestOriginAllowed bool
+		var requestMethodAllowed bool
+
+		for _, origin := range options.AllowOrigins {
 			w.Header().Add("Access-Control-Allow-Origin", origin)
+			if origin == "*" || origin == r.Host {
+				requestOriginAllowed = true
+			}
 		}
 
 		for _, header := range options.AllowHeaders {
 			w.Header().Add("Access-Control-Allow-Headers", header)
 		}
 
+		// Implicitly add OPTIONS method
+		w.Header().Add("Access-Control-Allow-Methods", http.MethodOptions)
+		for _, method := range options.AllowMethods {
+			w.Header().Add("Access-Control-Allow-Methods", method)
+			if method == r.Method {
+				requestMethodAllowed = true
+			}
+		}
+
 		if r.Method == http.MethodOptions {
 			return
 		}
 
-		// TODO: Check to make sure request origin is in AllowOrigin list
+		if !requestOriginAllowed {
+			Error(w, http.StatusForbidden)
+			return
+		}
+		if !requestMethodAllowed {
+			Error(w, http.StatusMethodNotAllowed)
+			return
+		}
+
 		h(w, r) // call original
 	})
 }
