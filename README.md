@@ -3,4 +3,40 @@
 
 *Like the Ben & Jerry's Ice Cream*
 
-`cdk deploy`
+## About
+PhishFood is the source code the TheKettle API. This project aims to provide quality, reliable data that an end user can have confidence in. At it's core, the API attempts to collect and summarize what is "Hot" on Reddit's most populare trading subreddits. 
+
+Below is an example resonse:
+
+```
+{
+    "id": "wallstreetbets_20210408",
+    "hour": 18,
+    "data": [
+        {
+            "Stock": {
+                "Symbol": "GME",
+                "FullName": "GameStop Corporation Common Stock",
+                "Exchange": "NYSE"
+            },
+            "Count": {
+                "PostScore": 16852,
+                "CommentScore": 3306,
+                "TotalScore": 975.1710719570256,
+                "PostMentions": 2,
+                "CommentMentions": 50
+            }
+        }
+    ]
+}
+```
+
+Currently there are 5 supported subreddits:
+- stocks
+- wallstreetbets
+- investing
+- Wallstreetbetsnew
+- WallStreetbetsELITE
+
+## Why?
+It was widely reported during the GameStop hype that hedge funds were setting up or buying applications to scrape Reddit for the latest trending stock data. I thought is would be a helpful to a retail trader to have access to the same data.
