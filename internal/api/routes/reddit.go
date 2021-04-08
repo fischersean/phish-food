@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"github.com/aws/aws-sdk-go/aws/awserr"
+
 	"github.com/fischersean/phish-food/internal/api"
 	db "github.com/fischersean/phish-food/internal/database"
 	"github.com/fischersean/phish-food/internal/etl"
@@ -116,7 +118,19 @@ func HandleGetArchivedRedditData(w http.ResponseWriter, r *http.Request) {
 		Key: key + ".json",
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "NoSuchKey":
+				mw.Error(w, http.StatusNotFound)
+			default:
+				log.Println(aerr.Code())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			log.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return
 	}
 
