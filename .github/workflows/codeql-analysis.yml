@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         # I am ignoring python since it is entirely AWS CDK stuff
-        language: [ 'go', 'javascript' ]
+        language: [ 'go' ]
 
     steps:
     - name: Checkout repository
