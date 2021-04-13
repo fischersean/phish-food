@@ -68,27 +68,3 @@ type ConnectionInput struct {
 	RedditPostArchiveTable string
 	UserTable              string
 }
-
-type ApiKeyQueryInput struct {
-	UnhashedKey string
-}
-
-type ApiKeyRecord struct {
-	KeyHash     string   `json:"key_hash"`
-	Permissions []string `json:"permissions"`
-	Enabled     bool     `json:"enabled"`
-}
-type UserRecord struct {
-	Username      string `json:"id"`
-	ApiKey        string `json:"Key"`
-	ApiKeyEnabled bool   `json:"KeyEnabled"`
-}
-
-type UserQueryInput struct {
-	Username string
-}
-
-type UserUpdateInput struct {
-	Username      string
-	NewUserRecord UserRecord
-}

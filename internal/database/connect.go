@@ -16,7 +16,6 @@ func Connect(input ConnectionInput) (conn Connection, err error) {
 
 	conn.EtlResultsTable = os.Getenv("ETL_RESULTS_TABLE")
 	conn.RedditPostArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
-	conn.ApiKeyTable = os.Getenv("API_KEY_TABLE")
 
 	if conn.EtlResultsTable == "" {
 		return conn, fmt.Errorf("Could not find required table name ETL_RESULTS_TABLE")
@@ -24,10 +23,6 @@ func Connect(input ConnectionInput) (conn Connection, err error) {
 
 	if conn.RedditPostArchiveBucket == "" {
 		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_BUCKET")
-	}
-
-	if conn.ApiKeyTable == "" {
-		return conn, fmt.Errorf("Could not find required table name API_KEY_TABLE")
 	}
 
 	conn.Session = input.Session
