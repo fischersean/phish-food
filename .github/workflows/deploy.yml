@@ -25,13 +25,6 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2.2.1
 
-      - name: Build
-        run: |
-          # install npm packages and build Vue app
-          cd web && \
-          npm install . &&\
-          npm run build
-
       - name: Test
         run: |
           go test ./...
@@ -47,7 +40,6 @@ jobs:
         run: |
           npm install aws-cdk
           pip install -r requirements.txt
-
 
       - name: Deploy
         run: |
