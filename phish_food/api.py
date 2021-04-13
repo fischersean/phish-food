@@ -58,24 +58,25 @@ class ApiStack(core.NestedStack):
 
         MAX_CAPACITY = 5
 
-        autoscale_group = cluster.add_capacity(
-            "DefaultAutoScalingGroup",
-            instance_type=ec2.InstanceType("t3a.micro"),
-            vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
-            can_containers_access_instance_role=True,
-            max_capacity=MAX_CAPACITY,
-        )
+        # autoscale_group = cluster.add_capacity(
+        # "DefaultAutoScalingGroup",
+        # instance_type=ec2.InstanceType("t3a.micro"),
+        # vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
+        # can_containers_access_instance_role=True,
+        # max_capacity=MAX_CAPACITY,
+        # )
 
-        autoscale_group.scale_on_cpu_utilization(
-            "CpuUtilizationScaler",
-            target_utilization_percent=95,
-        )
+        # autoscale_group.scale_on_cpu_utilization(
+        # "CpuUtilizationScaler",
+        # target_utilization_percent=95,
+        # )
 
-        ecs_service = ecs_patterns.ApplicationLoadBalancedEc2Service(
+        ecs_service = ecs_patterns.ApplicationLoadBalancedFargateService(
             self,
             "ApiEcs",
             cluster=cluster,
-            memory_reservation_mib=450,
+            cpu=256,
+            memory_limit_mib=512,
             task_image_options=ecs_patterns.ApplicationLoadBalancedTaskImageOptions(
                 image=ecs.ContainerImage.from_asset(
                     ".",

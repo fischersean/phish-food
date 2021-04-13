@@ -5,7 +5,6 @@ from aws_cdk import (
 )
 
 from phish_food.backend import BackendStack
-from phish_food.frontend import FrontendStack
 
 
 class PhishFood(core.Stack):
@@ -31,5 +30,5 @@ class PhishFood(core.Stack):
         # TODO: Create both a SSL certificate for us-east-1 and us-east-2
         # us-east-1 will go to the frontend while us-east-2 will go to the backend
 
-        frontend = FrontendStack(self, "Frontend", hosted_zone=zone)
+        # frontend = FrontendStack(self, "Frontend", hosted_zone=zone)
         backend = BackendStack(self, "Backend", vpc=vpc, hosted_zone=zone)

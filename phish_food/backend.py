@@ -10,7 +10,6 @@ from aws_cdk import (
 )
 
 from phish_food.etl import EtlStack
-from phish_food.api import ApiStack
 
 
 class BackendStack(core.NestedStack):
@@ -28,7 +27,7 @@ class BackendStack(core.NestedStack):
 
         count_results_table = self.dynamo_scraperesults()
         # reddit_archive_table = self.dynamo_redditarchive()
-        api_key_table = self.dynamo_apikeys()
+        # api_key_table = self.dynamo_apikeys()
         reddit_archive_bucket = self.s3_redditarchive()
 
         etl = EtlStack(
@@ -38,19 +37,18 @@ class BackendStack(core.NestedStack):
             cluster=cluster,
             count_results_table=count_results_table,
             reddit_archive_bucket=reddit_archive_bucket,
-            api_key_table=api_key_table,
         )
 
-        api = ApiStack(
-            self,
-            "API",
-            vpc=vpc,
-            cluster=cluster,
-            count_results_table=count_results_table,
-            reddit_archive_bucket=reddit_archive_bucket,
-            api_key_table=api_key_table,
-            hosted_zone=hosted_zone,
-        )
+        # api = ApiStack(
+        # self,
+        # "API",
+        # vpc=vpc,
+        # cluster=cluster,
+        # count_results_table=count_results_table,
+        # reddit_archive_bucket=reddit_archive_bucket,
+        # api_key_table=api_key_table,
+        # hosted_zone=hosted_zone,
+        # )
 
     def dynamo_scraperesults(self: core.Construct) -> dynamodb.Table:
         # parition is sub+YYYY+MM+DD

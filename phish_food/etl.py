@@ -23,7 +23,6 @@ class EtlStack(core.NestedStack):
         cluster: ecs.Cluster,
         count_results_table: dynamodb.Table,
         reddit_archive_bucket: s3.Bucket,
-        api_key_table: dynamodb.Table,
         **kwargs
     ) -> None:
 
@@ -41,7 +40,6 @@ class EtlStack(core.NestedStack):
             tradeables_bucket,
             count_results_table,
             reddit_archive_bucket,
-            api_key_table,
         )
 
     def tradeables(self) -> (s3.Bucket, lambda_.Function):
@@ -93,7 +91,6 @@ class EtlStack(core.NestedStack):
         tradeables_bucket: s3.Bucket,
         count_results_table: dynamodb.Table,
         reddit_archive_bucket: s3.Bucket,
-        api_key_table: dynamodb.Table,
     ) -> ecs.TaskDefinition:
 
         app_secret = os.environ["APP_SECRET"]
@@ -116,7 +113,6 @@ class EtlStack(core.NestedStack):
                     "TRADEABLES_BUCKET": tradeables_bucket.bucket_name,
                     "ETL_RESULTS_TABLE": count_results_table.table_name,
                     "REDDIT_ARCHIVE_BUCKET": reddit_archive_bucket.bucket_name,
-                    "API_KEY_TABLE": api_key_table.table_name,
                 },
                 cpu=2048,
                 memory_limit_mib=4096,
