@@ -44,11 +44,11 @@ func (c *Connection) PutRedditPostArchiveRecord(record RedditPostArchiveRecord) 
 	}
 
 	input := &s3.PutObjectInput{
-		Bucket: aws.String(c.RedditPostArchiveBucket),
+		Bucket: aws.String(c.redditPostArchiveBucket),
 		Key:    aws.String(record.Key),
 		Body:   bytes.NewReader(buf),
 	}
-	_, err = c.S3Service.PutObject(input)
+	_, err = c.s3Service.PutObject(input)
 	return err
 }
 
@@ -62,11 +62,11 @@ func (c *Connection) ListRedditPostArchiveRecord(input RedditPostArchiveListInpu
 	)
 
 	listInput := &s3.ListObjectsV2Input{
-		Bucket: aws.String(c.RedditPostArchiveBucket),
+		Bucket: aws.String(c.redditPostArchiveBucket),
 		Prefix: aws.String(startAfterPrefix),
 	}
 
-	objectList, err := c.S3Service.ListObjectsV2(listInput)
+	objectList, err := c.s3Service.ListObjectsV2(listInput)
 	if err != nil {
 		return keys, err
 	}
@@ -81,11 +81,11 @@ func (c *Connection) ListRedditPostArchiveRecord(input RedditPostArchiveListInpu
 func (c *Connection) GetRedditPostArchiveRecord(input RedditPostArchiveQueryInput) (record RedditPostArchiveRecord, err error) {
 
 	getObjectInput := &s3.GetObjectInput{
-		Bucket: aws.String(c.RedditPostArchiveBucket),
+		Bucket: aws.String(c.redditPostArchiveBucket),
 		Key:    aws.String(input.Key),
 	}
 
-	object, err := c.S3Service.GetObject(getObjectInput)
+	object, err := c.s3Service.GetObject(getObjectInput)
 	if err != nil {
 		return record, err
 	}
@@ -122,10 +122,10 @@ func (c *Connection) PutEtlResultsRecord(record EtlResultsRecord) (err error) {
 
 	input := &dynamodb.PutItemInput{
 		Item:      av,
-		TableName: aws.String(c.EtlResultsTable),
+		TableName: aws.String(c.etlResultsTable),
 	}
 
-	_, err = c.Service.PutItem(input)
+	_, err = c.service.PutItem(input)
 
 	return err
 }
@@ -139,10 +139,10 @@ func (c *Connection) GetEtlResultsRecord(input EtlResultsQueryInput) (record []E
 			},
 		},
 		KeyConditionExpression: aws.String("id = :v1"),
-		TableName:              aws.String(c.EtlResultsTable),
+		TableName:              aws.String(c.etlResultsTable),
 	}
 
-	result, err := c.Service.Query(qInput)
+	result, err := c.service.Query(qInput)
 
 	if err != nil {
 		return record, err
@@ -179,10 +179,10 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 			KeyConditionExpression: aws.String("id = :v1"),
 			ScanIndexForward:       aws.Bool(false),
 			Limit:                  aws.Int64(1),
-			TableName:              aws.String(c.EtlResultsTable),
+			TableName:              aws.String(c.etlResultsTable),
 		}
 
-		result, err = c.Service.Query(qInput)
+		result, err = c.service.Query(qInput)
 		if err != nil {
 			return record, err
 		}

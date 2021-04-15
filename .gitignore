@@ -1,3 +1,6 @@
+*.db
+.dolt
+
 resources/
 *.ignore
 */dist/*

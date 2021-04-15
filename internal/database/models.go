@@ -12,24 +12,17 @@ import (
 )
 
 type Connection struct {
-	// Session is the shared aws session
-	Session *session.Session
+	// session is the shared aws session
+	session *session.Session
 
 	// Service is the shared dynamo db connection
-	Service *dynamodb.DynamoDB
+	service *dynamodb.DynamoDB
 
-	// S3Service is the shared S3 connection
-	S3Service *s3.S3
+	// s3Service is the shared S3 connection
+	s3Service *s3.S3
 
-	EtlResultsTable         string
-	RedditPostArchiveBucket string
-	ApiKeyTable             string
-
-	// YahooTrendingTable is deprecated
-	YahooTrendingTable string
-
-	// UserTable is deprecated
-	UserTable string
+	etlResultsTable         string
+	redditPostArchiveBucket string
 }
 
 type EtlResultsRecord struct {

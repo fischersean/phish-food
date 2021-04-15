@@ -14,20 +14,20 @@ const (
 
 func Connect(input ConnectionInput) (conn Connection, err error) {
 
-	conn.EtlResultsTable = os.Getenv("ETL_RESULTS_TABLE")
-	conn.RedditPostArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
+	conn.etlResultsTable = os.Getenv("ETL_RESULTS_TABLE")
+	conn.redditPostArchiveBucket = os.Getenv("REDDIT_ARCHIVE_BUCKET")
 
-	if conn.EtlResultsTable == "" {
+	if conn.etlResultsTable == "" {
 		return conn, fmt.Errorf("Could not find required table name ETL_RESULTS_TABLE")
 	}
 
-	if conn.RedditPostArchiveBucket == "" {
+	if conn.redditPostArchiveBucket == "" {
 		return conn, fmt.Errorf("Could not find required table name REDDIT_ARCHIVE_BUCKET")
 	}
 
-	conn.Session = input.Session
-	conn.Service = dynamodb.New(conn.Session)
-	conn.S3Service = s3.New(conn.Session)
+	conn.session = input.Session
+	conn.service = dynamodb.New(conn.session)
+	conn.s3Service = s3.New(conn.session)
 
 	return conn, err
 }
