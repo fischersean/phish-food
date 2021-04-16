@@ -34,6 +34,12 @@ class EtlStack(core.NestedStack):
         Create Fargate task
         """
         tradeables_bucket, tradeables_update_func = self.tradeables()
+        distdb_bucket, distdb_update_func = self.distdb(
+            tradeables_bucket,
+            count_results_table,
+            reddit_archive_bucket,
+        )
+
         etl_task = self.fargate_etl(
             vpc,
             cluster,
@@ -77,6 +83,62 @@ class EtlStack(core.NestedStack):
             "RefreshTrabeablesSchedule",
             schedule=aws_events.Schedule.cron(
                 minute="0", hour="0", day="*", month="*", year="*"
+            ),
+        )
+
+        rule.add_target(targets.LambdaFunction(handler))
+
+        return bucket, handler
+
+    def distdb(
+        self,
+        tradeables_bucket: s3.Bucket,
+        count_results_table: dynamodb.Table,
+        reddit_archive_bucket: s3.Bucket,
+    ) -> (s3.Bucket, lambda_.Function):
+
+        bucket = s3.Bucket(
+            self,
+            "DistributedDatabase",
+            removal_policy=core.RemovalPolicy.DESTROY,
+            versioned=True,
+        )
+
+        handler = lambda_.Function(
+            self,
+            "UpdateDistDbFunction",
+            runtime=lambda_.Runtime.GO_1_X,
+            code=lambda_.Code.from_asset(
+                ".",
+                bundling=core.BundlingOptions(
+                    user="root",
+                    image=lambda_.Runtime.GO_1_X.bundling_docker_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "GOOS=linux go build -o /asset-output/main cmd/lambda/update-distdb/main.go",
+                    ],
+                ),
+            ),
+            handler="main",
+            environment={
+                "DIST_BUCKET": bucket.bucket_name,
+                "TRADEABLES_BUCKET": tradeables_bucket.bucket_name,
+                "ETL_RESULTS_TABLE": count_results_table.table_name,
+                "REDDIT_ARCHIVE_BUCKET": reddit_archive_bucket.bucket_name,
+            },
+            timeout=core.Duration.minutes(5),
+        )
+
+        bucket.grant_read_write(handler)
+
+        # Update db ever day at 11:30
+        # This should ensure that all of that day's ETL results are available
+        rule = aws_events.Rule(
+            self,
+            "UpdateDistDbSchedule",
+            schedule=aws_events.Schedule.cron(
+                minute="30", hour="23", day="*", month="*", year="*"
             ),
         )
 
