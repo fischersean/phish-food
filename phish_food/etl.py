@@ -131,6 +131,8 @@ class EtlStack(core.NestedStack):
         )
 
         bucket.grant_read_write(handler)
+        tradeables_bucket.grant_read_write(handler)
+        count_results_table.grant_read_data(handler)
 
         # Update db ever day at 11:30
         # This should ensure that all of that day's ETL results are available

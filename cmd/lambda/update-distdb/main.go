@@ -145,7 +145,7 @@ func repopulateCounts(conn *sql.DB, sess *session.Session) (err error) {
 	return err
 }
 
-func downloadDb(svc *s3.S3, distBucketName string) (err error) {
+func downloadDb(svc *s3.S3, distBucketName string, dbFname string) (err error) {
 
 	// Download db file from bucket
 	result, err := svc.GetObject(&s3.GetObjectInput{
@@ -164,7 +164,7 @@ func downloadDb(svc *s3.S3, distBucketName string) (err error) {
 		return err
 	}
 
-	err = ioutil.WriteFile(DB_NAME, buf, 0644)
+	err = ioutil.WriteFile(dbFname, buf, 0644)
 	if err != nil {
 		return err
 	}
@@ -172,9 +172,9 @@ func downloadDb(svc *s3.S3, distBucketName string) (err error) {
 	return err
 }
 
-func uploadDb(svc *s3.S3, distBucketName string) (err error) {
+func uploadDb(svc *s3.S3, distBucketName string, dbFname string) (err error) {
 
-	buf, err := ioutil.ReadFile(DB_NAME)
+	buf, err := ioutil.ReadFile(dbFname)
 	if err != nil {
 		return err
 	}
@@ -199,18 +199,27 @@ func Handler() (err error) {
 
 	S3Service := s3.New(sess)
 
+	// TODO: I am handling this file poorly.
+	// I need to fix this and adjust each func responsibilities
+	var dbFname string
+	if os.Getenv("DEV") == "YES" {
+		dbFname = DB_NAME
+	} else {
+		dbFname = "/tmp/" + DB_NAME
+	}
+
 	distBucketName := os.Getenv("DIST_BUCKET")
-	err = downloadDb(S3Service, distBucketName)
+	err = downloadDb(S3Service, distBucketName, dbFname)
 	if err != nil {
 		return err
 	}
 
 	if os.Getenv("DEV") != "YES" {
-		defer os.Remove(DB_NAME)
+		defer os.Remove(dbFname)
 	}
 
 	// Perform db update
-	conn, err := sql.Open("sqlite3", DB_NAME)
+	conn, err := sql.Open("sqlite3", dbFname)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -230,7 +239,7 @@ func Handler() (err error) {
 	log.Println("Finished updating counts table")
 
 	// Upload the file back to s3
-	err = uploadDb(S3Service, distBucketName)
+	err = uploadDb(S3Service, distBucketName, dbFname)
 	return err
 }
 
