@@ -6,7 +6,7 @@
 ## About
 PhishFood is the source code for the TheKettle database. This project aims to provide quality, reliable data that an end user can have confidence in. At it's core, the pipeline and database attempts to collect and summarize what is "Hot" on Reddit's most populare trading subreddits. 
 
-Below is an example resonse:
+Below is an example database entry:
 
 ```
 {
@@ -35,6 +35,8 @@ Currently there are 3 supported subreddits:
 - stocks
 - wallstreetbets
 - investing
+
+Get the SQLite Version of the database [Here](https://phishfood-backendnesteds-distributeddatabase03ed3-1wdkfq5b84csx.s3.us-east-2.amazonaws.com/kettle.db)
 
 ## Why?
 It was widely reported during the GameStop hype that hedge funds were setting up or buying applications to scrape Reddit for the latest trending stock data. I thought it would be helpful to a retail trader to have access to the same data.
