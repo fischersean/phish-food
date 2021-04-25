@@ -166,7 +166,7 @@ func (c *Connection) GetLatestEtlResultsRecord(input EtlResultsQueryInput) (reco
 	count := int64(0)
 	lookbackCount := 0
 
-	for d := input.Date; count < 1; d.Add(-24 * time.Hour) {
+	for d := input.Date; count < 1; d = d.Add(-24 * time.Hour) {
 		if lookbackCount > GetLatestRedditMaxLookback {
 			return record, fmt.Errorf("Reached max lookback distance without finding primary key")
 		}
