@@ -102,6 +102,7 @@ class EtlStack(core.NestedStack):
             "DistributedDatabase",
             removal_policy=core.RemovalPolicy.DESTROY,
             versioned=True,
+            public_read_access=True,
         )
 
         handler = lambda_.Function(
