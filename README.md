@@ -4,9 +4,9 @@
 *Like the Ben & Jerry's Ice Cream*
 
 ## About
-PhishFood is the source code for the TheKettle database. This project aims to provide quality, reliable data that an end user can have confidence in. At it's core, the pipeline and database attempts to collect and summarize what is "Hot" on Reddit's most populare trading subreddits. 
+PhishFood is the source code for the ETL pipeline and associated cloud infrastructure required to produce the TheKettle database. This project aims to provide quality, reliable data that an end user can have confidence in. At it's core, the pipeline and database attempts to collect and summarize what is "Hot" on Reddit's most popular trading subreddits. 
 
-Below is an example database entry:
+Below is an example database entry (NoSQL version):
 
 ```
 {
