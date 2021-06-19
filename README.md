@@ -36,7 +36,7 @@ Currently there are 3 supported subreddits:
 - wallstreetbets
 - investing
 
-Get the SQLite Version of the database [Here](https://phishfood-backendnesteds-distributeddatabase03ed3-1wdkfq5b84csx.s3.us-east-2.amazonaws.com/kettle.db)
+Get the SQLite Version of the database [here](https://phishfood-backendnesteds-distributeddatabase03ed3-1wdkfq5b84csx.s3.us-east-2.amazonaws.com/kettle.db)
 
 ## Why?
 It was widely reported during the GameStop hype that hedge funds were setting up or buying applications to scrape Reddit for the latest trending stock data. I thought it would be helpful to a retail trader to have access to the same data.
