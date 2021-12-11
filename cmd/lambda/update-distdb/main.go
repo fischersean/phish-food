@@ -75,12 +75,6 @@ func repopulateSymbols(conn *sql.DB, s3Service *s3.S3) (err error) {
 
 func repopulateCounts(conn *sql.DB, sess *session.Session) (err error) {
 
-	// Empty table
-	err = clearTbl(conn, "Counts")
-	if err != nil {
-		return err
-	}
-
 	dynamoConn, err := db.Connect(db.ConnectionInput{
 		Session: sess,
 	})
@@ -88,11 +82,37 @@ func repopulateCounts(conn *sql.DB, sess *session.Session) (err error) {
 		return err
 	}
 
-	stopDate, err := time.Parse(time.RFC822, "20 Mar 21 00:00 UTC")
+	// get oldest date
+	stmtString := `
+		SELECT 
+		FormatedDate
+		FROM Counts
+		ORDER BY FormatedDate DESC
+		LIMIT 1`
+	stmt, err := conn.Prepare(stmtString)
 	if err != nil {
 		return err
 	}
 
+	res, err := stmt.Query()
+	if err != nil {
+		return err
+	}
+
+	var strDate string // the formated date. will convert later
+	res.Next()
+	err = res.Scan(&strDate)
+	if err != nil {
+		return err
+	}
+	res.Close()
+
+	stopDate, err := time.Parse("20060102", strDate)
+	if err != nil {
+		return err
+	}
+
+	// Starting from today and working backwards, fill in all missing dates
 	for date := time.Now(); date.After(stopDate); date = date.Add(-24 * time.Hour) {
 		for _, sub := range etl.FetchTargets {
 			etlRecords, err := dynamoConn.GetEtlResultsRecord(db.EtlResultsQueryInput{
