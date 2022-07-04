@@ -1,4 +1,7 @@
 # PhishFood
+
+**This project has migrated to [sourcehut](https://git.sr.ht/~swf/phish-food)**
+
 [![Deploy](https://github.com/fischersean/phish-food/actions/workflows/deploy.yml/badge.svg)](https://github.com/fischersean/phish-food/actions/workflows/deploy.yml) [![CodeQL](https://github.com/fischersean/phish-food/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/fischersean/phish-food/actions/workflows/codeql-analysis.yml)
 
 *Like the Ben & Jerry's Ice Cream*
